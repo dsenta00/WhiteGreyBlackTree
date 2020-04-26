@@ -5,7 +5,7 @@ public final class Prime {
     private Prime() {
     }
 
-    static boolean isPrime(int n) {
+    public static boolean isPrime(int n) {
         // Corner cases
         if (n <= 1) return false;
         if (n <= 3) return true;

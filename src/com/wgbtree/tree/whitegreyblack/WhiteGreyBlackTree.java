@@ -8,6 +8,7 @@ import com.wgbtree.tree.whitegreyblack.node.model.WgbData;
 import com.wgbtree.tree.whitegreyblack.node.model.WgbKey;
 import com.wgbtree.tree.whitegreyblack.node.service.GreyNodeHandler;
 import com.wgbtree.tree.whitegreyblack.node.service.WgbNodeHandler;
+import com.wgbtree.tree.whitegreyblack.node.util.Prime;
 import com.wgbtree.tree.whitegreyblack.node.util.PrimeConstants;
 
 import java.io.Serializable;
@@ -16,7 +17,13 @@ import java.util.stream.Collectors;
 
 public class WhiteGreyBlackTree<K extends Comparable<K>, T> implements AsTree<K, T>, Serializable {
     private int count;
+    private int firstPrime = PrimeConstants.FIRST_PRIME;
     private GreyNode<K, T> greyNode;
+
+    public WhiteGreyBlackTree(int firstPrime) {
+        assert Prime.isPrime(firstPrime) : "The given parameter is not a prime!";
+        this.firstPrime = firstPrime;
+    }
 
     public WhiteGreyBlackTree() {
     }
@@ -233,7 +240,7 @@ public class WhiteGreyBlackTree<K extends Comparable<K>, T> implements AsTree<K,
         WgbData<K, T> data = new WgbData<>(key, value);
 
         try {
-            greyNode = GreyNodeHandler.insert(greyNode, PrimeConstants.FIRST_PRIME, data);
+            greyNode = GreyNodeHandler.insert(greyNode, firstPrime, data);
             this.count++;
             return value;
         } catch (UniqueException e) {
@@ -241,7 +248,7 @@ public class WhiteGreyBlackTree<K extends Comparable<K>, T> implements AsTree<K,
 
             try {
                 greyNode = GreyNodeHandler.delete(greyNode, data.getKey());
-                greyNode = GreyNodeHandler.insert(greyNode, PrimeConstants.FIRST_PRIME, data);
+                greyNode = GreyNodeHandler.insert(greyNode, firstPrime, data);
             } catch (NotFoundException | UniqueException ignored) {
             }
 
