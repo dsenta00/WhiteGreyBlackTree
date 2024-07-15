@@ -13,8 +13,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.wgbtree.tree.whitegreyblackplus.entries.EntriesList.LeakPolicy.LARGEST;
-import static com.wgbtree.tree.whitegreyblackplus.entries.EntriesList.LeakPolicy.SMALLEST;
+import static com.wgbtree.tree.whitegreyblackplus.constants.LeakPolicy.LARGEST;
+import static com.wgbtree.tree.whitegreyblackplus.constants.LeakPolicy.SMALLEST;
 import static java.util.Objects.isNull;
 import static lombok.AccessLevel.PRIVATE;
 
@@ -25,7 +25,7 @@ public final class GNodeRotator {
 																  int order,
 																  int rank,
 																  boolean allowDuplicates) {
-		if (node.getLeakPolicy() == LARGEST) {
+		if (node.setLeakPolicy() == LARGEST) {
 			/*
 			 * Since keys are sorted ascending, the greatest key is set to leak right
 			 * Hence, we won't do any rotation since we don't need it
@@ -60,7 +60,7 @@ public final class GNodeRotator {
 																   int order,
 																   int rank,
 																   boolean allowDuplicates) {
-		if (node.getLeakPolicy() == SMALLEST) {
+		if (node.setLeakPolicy() == SMALLEST) {
 			/*
 			 * Since keys are sorted ascending, the smallest key is set to leak left
 			 * Hence, we won't do any rotation since we don't need it

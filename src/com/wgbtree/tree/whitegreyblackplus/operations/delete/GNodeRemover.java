@@ -1,6 +1,5 @@
 package com.wgbtree.tree.whitegreyblackplus.operations.delete;
 
-import com.wgbtree.tree.whitegreyblackplus.entries.EntriesList.LeakPolicy;
 import com.wgbtree.tree.whitegreyblackplus.node.BNode;
 import com.wgbtree.tree.whitegreyblackplus.node.GNode;
 import com.wgbtree.tree.whitegreyblackplus.node.WNode;
@@ -28,16 +27,19 @@ public final class GNodeRemover {
 		var removedEntry = entries.remove(key);
 
 		if (removedEntry != null) {
-			if (node.getLeakPolicy() == LeakPolicy.SMALLEST && node.getCountRight() > 0) {
-				var minResult = BNodeRemover.removeMin(node.getRight());
-				entries.add(minResult.getEntry());
-				node.setRight((BNode<K, T>) minResult.getNode());
-				node.decCountRight();
-			} else if (/*node.getLeakPolicy() == LeakPolicy.LARGEST && */ node.getCountLeft() > 0) {
-				var maxResult = WNodeRemover.removeMax(node.getLeft());
-				entries.add(maxResult.getEntry());
-				node.setLeft((WNode<K, T>) maxResult.getNode());
-				node.decCountLeft();
+			switch (node.getMorePopulatedDirection()) {
+				case LEFT -> {
+					var maxResult = WNodeRemover.removeMax(node.getLeft());
+					entries.add(maxResult.getEntry());
+					node.setLeft((WNode<K, T>) maxResult.getNode());
+					node.decCountLeft();
+				}
+				case RIGHT -> {
+					var minResult = BNodeRemover.removeMin(node.getRight());
+					entries.add(minResult.getEntry());
+					node.setRight((BNode<K, T>) minResult.getNode());
+					node.decCountRight();
+				}
 			}
 		} else if (entries.lastEntry().getKey().compareTo(key) < 0) {
 			var result = BNodeRemover.remove(node.getRight(), key, keyHash);

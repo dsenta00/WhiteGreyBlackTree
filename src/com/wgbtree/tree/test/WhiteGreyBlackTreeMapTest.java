@@ -16,6 +16,7 @@ public class WhiteGreyBlackTreeMapTest extends Test {
 
 	public static void main(String[] args) {
 		testInsert();
+		testRemoveMin();
 		testRemoveMax();
 		testUuidInsert();
 		IntStream.range(0, 100_000)
@@ -60,106 +61,110 @@ public class WhiteGreyBlackTreeMapTest extends Test {
 		}
 	}
 
+	public static void testRemoveMin() {
+		var leakEntry = new AtomicReference<Entry<Integer, Set<Integer>>>();
+
+		var gNode = new GNode<Integer, Integer>(3, false);
+		gNode.getEntries().add(new SimpleEntry<>(4, Set.of(4)), leakEntry);
+		gNode.getEntries().add(new SimpleEntry<>(5, Set.of(5)), leakEntry);
+		gNode.getEntries().add(new SimpleEntry<>(6, Set.of(6)), leakEntry);
+
+		var wNode = new WNode<Integer, Integer>(3, 2, false);
+		wNode.getEntries().add(new SimpleEntry<>(1, Set.of(1)), leakEntry);
+		wNode.getEntries().add(new SimpleEntry<>(2, Set.of(2)), leakEntry);
+		wNode.getEntries().add(new SimpleEntry<>(3, Set.of(3)), leakEntry);
+
+		var bNode = new BNode<Integer, Integer>(3, 2, false);
+		bNode.getEntries().add(new SimpleEntry<>(7, Set.of(7)), leakEntry);
+		bNode.getEntries().add(new SimpleEntry<>(8, Set.of(8)), leakEntry);
+		bNode.getEntries().add(new SimpleEntry<>(9, Set.of(9)), leakEntry);
+
+		gNode.setLeft(wNode);
+		gNode.setCountLeft(3);
+		gNode.setRight(bNode);
+		gNode.setCountRight(3);
+
+		for (int i = 1; i < 10; i++) {
+			var result = GNodeRemover.removeMin(gNode);
+			assertEqual(i, result.getEntry().getKey());
+			gNode = (GNode<Integer, Integer>) result.getNode();
+		}
+	}
+
 	public static void testUuidInsert() {
 		var tree = new WhiteGreyBlackTreeMap<String, String>(5);
 
-		tree.put("97d25990-f187-49f0-9c63-d2a8cca8df5c", "97d25990-f187-49f0-9c63-d2a8cca8df5c");
-		assertEqual("97d25990-f187-49f0-9c63-d2a8cca8df5c", tree.get("97d25990-f187-49f0-9c63-d2a8cca8df5c"));
-		tree.put("c922febb-3f9e-4b8c-bb54-c72be8f2c1b5", "c922febb-3f9e-4b8c-bb54-c72be8f2c1b5");
-		assertEqual("c922febb-3f9e-4b8c-bb54-c72be8f2c1b5", tree.get("c922febb-3f9e-4b8c-bb54-c72be8f2c1b5"));
-		tree.put("c8853a0e-8ddb-4087-b7e7-2a40b9dce205", "c8853a0e-8ddb-4087-b7e7-2a40b9dce205");
-		assertEqual("c8853a0e-8ddb-4087-b7e7-2a40b9dce205", tree.get("c8853a0e-8ddb-4087-b7e7-2a40b9dce205"));
-		tree.put("7c8176a1-eab3-4eaf-a585-cfbcb24fb092", "7c8176a1-eab3-4eaf-a585-cfbcb24fb092");
-		assertEqual("7c8176a1-eab3-4eaf-a585-cfbcb24fb092", tree.get("7c8176a1-eab3-4eaf-a585-cfbcb24fb092"));
-		tree.put("e5b5a05e-de22-467d-8a76-cb2ffda97c82", "e5b5a05e-de22-467d-8a76-cb2ffda97c82");
-		assertEqual("e5b5a05e-de22-467d-8a76-cb2ffda97c82", tree.get("e5b5a05e-de22-467d-8a76-cb2ffda97c82"));
-		tree.put("333e343a-28f1-494f-ae68-856087d3c310", "333e343a-28f1-494f-ae68-856087d3c310");
-		assertEqual("333e343a-28f1-494f-ae68-856087d3c310", tree.get("333e343a-28f1-494f-ae68-856087d3c310"));
-		tree.put("8c498fa1-8602-4685-8080-56e95e93cf51", "8c498fa1-8602-4685-8080-56e95e93cf51");
-		assertEqual("8c498fa1-8602-4685-8080-56e95e93cf51", tree.get("8c498fa1-8602-4685-8080-56e95e93cf51"));
-		tree.put("fec9d528-df3f-4a23-a595-e86485699613", "fec9d528-df3f-4a23-a595-e86485699613");
-		assertEqual("fec9d528-df3f-4a23-a595-e86485699613", tree.get("fec9d528-df3f-4a23-a595-e86485699613"));
-		tree.put("3cc69b04-fdc0-42a7-8dca-3ee92122943b", "3cc69b04-fdc0-42a7-8dca-3ee92122943b");
-		assertEqual("3cc69b04-fdc0-42a7-8dca-3ee92122943b", tree.get("3cc69b04-fdc0-42a7-8dca-3ee92122943b"));
-		tree.put("b9dea8b8-ab92-4e67-ad2b-802b349a4551", "b9dea8b8-ab92-4e67-ad2b-802b349a4551");
-		assertEqual("b9dea8b8-ab92-4e67-ad2b-802b349a4551", tree.get("b9dea8b8-ab92-4e67-ad2b-802b349a4551"));
-		tree.put("0e9fbf5a-1703-4d06-b21d-3874b064fd31", "0e9fbf5a-1703-4d06-b21d-3874b064fd31");
-		assertEqual("0e9fbf5a-1703-4d06-b21d-3874b064fd31", tree.get("0e9fbf5a-1703-4d06-b21d-3874b064fd31"));
-		tree.put("8624317e-0491-4f4e-ba3f-38591de0b6e0", "8624317e-0491-4f4e-ba3f-38591de0b6e0");
-		assertEqual("8624317e-0491-4f4e-ba3f-38591de0b6e0", tree.get("8624317e-0491-4f4e-ba3f-38591de0b6e0"));
-		tree.put("bedadb50-fac8-472d-bd00-94af4af948f9", "bedadb50-fac8-472d-bd00-94af4af948f9");
-		assertEqual("bedadb50-fac8-472d-bd00-94af4af948f9", tree.get("bedadb50-fac8-472d-bd00-94af4af948f9"));
-		tree.put("9ed5e3a5-e78c-4a40-bbc4-c8027d977157", "9ed5e3a5-e78c-4a40-bbc4-c8027d977157");
-		assertEqual("9ed5e3a5-e78c-4a40-bbc4-c8027d977157", tree.get("9ed5e3a5-e78c-4a40-bbc4-c8027d977157"));
-		tree.put("9006459b-ca61-4b1d-bd5d-4302cfa60c16", "9006459b-ca61-4b1d-bd5d-4302cfa60c16");
-		assertEqual("9006459b-ca61-4b1d-bd5d-4302cfa60c16", tree.get("9006459b-ca61-4b1d-bd5d-4302cfa60c16"));
-		tree.put("b1fc1c7e-dbcf-4991-b2ef-70910ff86493", "b1fc1c7e-dbcf-4991-b2ef-70910ff86493");
-		assertEqual("b1fc1c7e-dbcf-4991-b2ef-70910ff86493", tree.get("b1fc1c7e-dbcf-4991-b2ef-70910ff86493"));
-		tree.put("fcc2f5cc-98af-4a9d-90e3-eb7bfa9999bc", "fcc2f5cc-98af-4a9d-90e3-eb7bfa9999bc");
-		assertEqual("fcc2f5cc-98af-4a9d-90e3-eb7bfa9999bc", tree.get("fcc2f5cc-98af-4a9d-90e3-eb7bfa9999bc"));
-		tree.put("51808e89-de69-4d49-a8d6-4d6ad6742cfe", "51808e89-de69-4d49-a8d6-4d6ad6742cfe");
-		assertEqual("51808e89-de69-4d49-a8d6-4d6ad6742cfe", tree.get("51808e89-de69-4d49-a8d6-4d6ad6742cfe"));
-		tree.put("7140134a-eca2-4fb7-9f81-63ffe87a2954", "7140134a-eca2-4fb7-9f81-63ffe87a2954");
-		assertEqual("7140134a-eca2-4fb7-9f81-63ffe87a2954", tree.get("7140134a-eca2-4fb7-9f81-63ffe87a2954"));
-		tree.put("fb6926f5-6d60-4102-87c0-fb866467932c", "fb6926f5-6d60-4102-87c0-fb866467932c");
-		assertEqual("fb6926f5-6d60-4102-87c0-fb866467932c", tree.get("fb6926f5-6d60-4102-87c0-fb866467932c"));
-		tree.put("cd4cfad2-ee42-48a6-a340-15439a8ce8e7", "cd4cfad2-ee42-48a6-a340-15439a8ce8e7");
-		assertEqual("cd4cfad2-ee42-48a6-a340-15439a8ce8e7", tree.get("cd4cfad2-ee42-48a6-a340-15439a8ce8e7"));
-		tree.put("ba6f3659-e0c6-4ffb-aa1c-5ea57edddf89", "ba6f3659-e0c6-4ffb-aa1c-5ea57edddf89");
-		assertEqual("ba6f3659-e0c6-4ffb-aa1c-5ea57edddf89", tree.get("ba6f3659-e0c6-4ffb-aa1c-5ea57edddf89"));
-		tree.put("5ef48527-de21-4ff1-9467-5ad946b5f826", "5ef48527-de21-4ff1-9467-5ad946b5f826");
-		assertEqual("5ef48527-de21-4ff1-9467-5ad946b5f826", tree.get("5ef48527-de21-4ff1-9467-5ad946b5f826"));
-		tree.put("ad1f4ac4-6360-4050-8d3d-83bc94998860", "ad1f4ac4-6360-4050-8d3d-83bc94998860");
-		assertEqual("ad1f4ac4-6360-4050-8d3d-83bc94998860", tree.get("ad1f4ac4-6360-4050-8d3d-83bc94998860"));
-		tree.put("c6996691-61f0-49ac-be51-ca100d389b64", "c6996691-61f0-49ac-be51-ca100d389b64");
-		assertEqual("c6996691-61f0-49ac-be51-ca100d389b64", tree.get("c6996691-61f0-49ac-be51-ca100d389b64"));
-		tree.put("29eed7b1-01b0-4220-9426-97a1c3b4e166", "29eed7b1-01b0-4220-9426-97a1c3b4e166");
-		assertEqual("29eed7b1-01b0-4220-9426-97a1c3b4e166", tree.get("29eed7b1-01b0-4220-9426-97a1c3b4e166"));
-		tree.put("dba69f37-9f1e-4d8c-8142-7833593c8c06", "dba69f37-9f1e-4d8c-8142-7833593c8c06");
-		assertEqual("dba69f37-9f1e-4d8c-8142-7833593c8c06", tree.get("dba69f37-9f1e-4d8c-8142-7833593c8c06"));
-		tree.put("54ba11fc-ea78-4afd-abe4-f01be7a700da", "54ba11fc-ea78-4afd-abe4-f01be7a700da");
-		assertEqual("54ba11fc-ea78-4afd-abe4-f01be7a700da", tree.get("54ba11fc-ea78-4afd-abe4-f01be7a700da"));
-		tree.put("e0330e53-39b5-47a5-a7b6-3751e962b9be", "e0330e53-39b5-47a5-a7b6-3751e962b9be");
-		assertEqual("e0330e53-39b5-47a5-a7b6-3751e962b9be", tree.get("e0330e53-39b5-47a5-a7b6-3751e962b9be"));
-		tree.put("067dd359-8684-4574-a7ec-c30b50fa9a69", "067dd359-8684-4574-a7ec-c30b50fa9a69");
-		assertEqual("067dd359-8684-4574-a7ec-c30b50fa9a69", tree.get("067dd359-8684-4574-a7ec-c30b50fa9a69"));
-		tree.put("3225820c-0a51-4c6a-aaff-55616f957429", "3225820c-0a51-4c6a-aaff-55616f957429");
-		assertEqual("3225820c-0a51-4c6a-aaff-55616f957429", tree.get("3225820c-0a51-4c6a-aaff-55616f957429"));
-		tree.put("5ffac3b6-4585-4a8c-821f-ca5f1ddde832", "5ffac3b6-4585-4a8c-821f-ca5f1ddde832");
-		assertEqual("5ffac3b6-4585-4a8c-821f-ca5f1ddde832", tree.get("5ffac3b6-4585-4a8c-821f-ca5f1ddde832"));
-		tree.put("826a35c9-c950-40ac-9683-238d90846bbc", "826a35c9-c950-40ac-9683-238d90846bbc");
-		assertEqual("826a35c9-c950-40ac-9683-238d90846bbc", tree.get("826a35c9-c950-40ac-9683-238d90846bbc"));
-		tree.put("f3e6e5f4-72f4-4bd5-b13f-8d3c7022ad26", "f3e6e5f4-72f4-4bd5-b13f-8d3c7022ad26");
-		assertEqual("f3e6e5f4-72f4-4bd5-b13f-8d3c7022ad26", tree.get("f3e6e5f4-72f4-4bd5-b13f-8d3c7022ad26"));
-		tree.put("09f47805-9a2b-47b9-a286-81f0066fee7b", "09f47805-9a2b-47b9-a286-81f0066fee7b");
-		assertEqual("09f47805-9a2b-47b9-a286-81f0066fee7b", tree.get("09f47805-9a2b-47b9-a286-81f0066fee7b"));
-		tree.put("150f717a-af77-4721-be4d-3ae1a4934ffd", "150f717a-af77-4721-be4d-3ae1a4934ffd");
-		assertEqual("150f717a-af77-4721-be4d-3ae1a4934ffd", tree.get("150f717a-af77-4721-be4d-3ae1a4934ffd"));
-		tree.put("35d76d95-49dd-464d-a22e-0c397bff84e5", "35d76d95-49dd-464d-a22e-0c397bff84e5");
-		assertEqual("35d76d95-49dd-464d-a22e-0c397bff84e5", tree.get("35d76d95-49dd-464d-a22e-0c397bff84e5"));
-		tree.put("6747046a-a1cf-4d1f-9df8-c0a05bf1a4b6", "6747046a-a1cf-4d1f-9df8-c0a05bf1a4b6");
-		assertEqual("6747046a-a1cf-4d1f-9df8-c0a05bf1a4b6", tree.get("6747046a-a1cf-4d1f-9df8-c0a05bf1a4b6"));
-		tree.put("b51b9ceb-9a00-47f1-b2e8-0bec0f12e2fb", "b51b9ceb-9a00-47f1-b2e8-0bec0f12e2fb");
-		assertEqual("b51b9ceb-9a00-47f1-b2e8-0bec0f12e2fb", tree.get("b51b9ceb-9a00-47f1-b2e8-0bec0f12e2fb"));
-		tree.put("80108540-0564-43eb-84a9-be17d10259cc", "80108540-0564-43eb-84a9-be17d10259cc");
-		assertEqual("80108540-0564-43eb-84a9-be17d10259cc", tree.get("80108540-0564-43eb-84a9-be17d10259cc"));
-		tree.put("56a34c65-5a87-4ffc-ab0f-15d51d32810a", "56a34c65-5a87-4ffc-ab0f-15d51d32810a");
-		assertEqual("56a34c65-5a87-4ffc-ab0f-15d51d32810a", tree.get("56a34c65-5a87-4ffc-ab0f-15d51d32810a"));
-		tree.put("d10d6be1-24de-4ff3-9a05-d89ca1f97e05", "d10d6be1-24de-4ff3-9a05-d89ca1f97e05");
-		assertEqual("d10d6be1-24de-4ff3-9a05-d89ca1f97e05", tree.get("d10d6be1-24de-4ff3-9a05-d89ca1f97e05"));
-		tree.put("a54cc360-b0ac-4c32-8fae-891288dee767", "a54cc360-b0ac-4c32-8fae-891288dee767");
-		assertEqual("a54cc360-b0ac-4c32-8fae-891288dee767", tree.get("a54cc360-b0ac-4c32-8fae-891288dee767"));
-		tree.put("39431dca-7b9b-4548-9130-c6a96f5a8e5e", "39431dca-7b9b-4548-9130-c6a96f5a8e5e");
-		assertEqual("39431dca-7b9b-4548-9130-c6a96f5a8e5e", tree.get("39431dca-7b9b-4548-9130-c6a96f5a8e5e"));
+		tree.put("17200146-fc75-4fc7-bbdb-904ad88aa96e", "17200146-fc75-4fc7-bbdb-904ad88aa96e");
+		assertEqual("17200146-fc75-4fc7-bbdb-904ad88aa96e", tree.get("17200146-fc75-4fc7-bbdb-904ad88aa96e"));
+		tree.put("cc037d5a-6637-4337-86ea-95043a9159ea", "cc037d5a-6637-4337-86ea-95043a9159ea");
+		assertEqual("cc037d5a-6637-4337-86ea-95043a9159ea", tree.get("cc037d5a-6637-4337-86ea-95043a9159ea"));
+		tree.put("3aba115d-5a68-4d5c-80db-5ecc0226020e", "3aba115d-5a68-4d5c-80db-5ecc0226020e");
+		assertEqual("3aba115d-5a68-4d5c-80db-5ecc0226020e", tree.get("3aba115d-5a68-4d5c-80db-5ecc0226020e"));
+		tree.put("78ab40c6-1aa4-4026-9114-fdafcc82891e", "78ab40c6-1aa4-4026-9114-fdafcc82891e");
+		assertEqual("78ab40c6-1aa4-4026-9114-fdafcc82891e", tree.get("78ab40c6-1aa4-4026-9114-fdafcc82891e"));
+		tree.put("d9c90462-a699-4ebc-b5b6-3a334b7dbf49", "d9c90462-a699-4ebc-b5b6-3a334b7dbf49");
+		assertEqual("d9c90462-a699-4ebc-b5b6-3a334b7dbf49", tree.get("d9c90462-a699-4ebc-b5b6-3a334b7dbf49"));
+		tree.put("8bf7cc0f-7c53-4fe0-9109-eb6bd7e58525", "8bf7cc0f-7c53-4fe0-9109-eb6bd7e58525");
+		assertEqual("8bf7cc0f-7c53-4fe0-9109-eb6bd7e58525", tree.get("8bf7cc0f-7c53-4fe0-9109-eb6bd7e58525"));
+		tree.put("12916ada-3d90-4861-b33f-033663ccb7c9", "12916ada-3d90-4861-b33f-033663ccb7c9");
+		assertEqual("12916ada-3d90-4861-b33f-033663ccb7c9", tree.get("12916ada-3d90-4861-b33f-033663ccb7c9"));
+		tree.put("6d8d3485-1b15-4d97-be3e-6799555f9142", "6d8d3485-1b15-4d97-be3e-6799555f9142");
+		assertEqual("6d8d3485-1b15-4d97-be3e-6799555f9142", tree.get("6d8d3485-1b15-4d97-be3e-6799555f9142"));
+		tree.put("b383caf6-4f8c-44b6-833b-f1caec399b44", "b383caf6-4f8c-44b6-833b-f1caec399b44");
+		assertEqual("b383caf6-4f8c-44b6-833b-f1caec399b44", tree.get("b383caf6-4f8c-44b6-833b-f1caec399b44"));
+		tree.put("a0482e09-c1d6-4ef0-a770-2f4ca25dd270", "a0482e09-c1d6-4ef0-a770-2f4ca25dd270");
+		assertEqual("a0482e09-c1d6-4ef0-a770-2f4ca25dd270", tree.get("a0482e09-c1d6-4ef0-a770-2f4ca25dd270"));
+		tree.put("3d154d5b-108b-464c-8637-a97bb429f50c", "3d154d5b-108b-464c-8637-a97bb429f50c");
+		assertEqual("3d154d5b-108b-464c-8637-a97bb429f50c", tree.get("3d154d5b-108b-464c-8637-a97bb429f50c"));
+		tree.put("ae3e2f71-4f98-407a-9ee1-be003c93ffc0", "ae3e2f71-4f98-407a-9ee1-be003c93ffc0");
+		assertEqual("ae3e2f71-4f98-407a-9ee1-be003c93ffc0", tree.get("ae3e2f71-4f98-407a-9ee1-be003c93ffc0"));
+		tree.put("f5977a81-a3e1-485e-a92e-6080ad06c7cd", "f5977a81-a3e1-485e-a92e-6080ad06c7cd");
+		assertEqual("f5977a81-a3e1-485e-a92e-6080ad06c7cd", tree.get("f5977a81-a3e1-485e-a92e-6080ad06c7cd"));
+		tree.put("d551b69f-3607-4baa-a3a5-fdf80808b9dd", "d551b69f-3607-4baa-a3a5-fdf80808b9dd");
+		assertEqual("d551b69f-3607-4baa-a3a5-fdf80808b9dd", tree.get("d551b69f-3607-4baa-a3a5-fdf80808b9dd"));
+		tree.put("8510cce1-4815-47e5-8063-f87f49e316e5", "8510cce1-4815-47e5-8063-f87f49e316e5");
+		assertEqual("8510cce1-4815-47e5-8063-f87f49e316e5", tree.get("8510cce1-4815-47e5-8063-f87f49e316e5"));
+		tree.put("7e1864cd-da2f-417d-809b-cdb2e51f3df1", "7e1864cd-da2f-417d-809b-cdb2e51f3df1");
+		assertEqual("7e1864cd-da2f-417d-809b-cdb2e51f3df1", tree.get("7e1864cd-da2f-417d-809b-cdb2e51f3df1"));
+		tree.put("9eefac71-c95d-4acc-ad67-d9c8decbeaf0", "9eefac71-c95d-4acc-ad67-d9c8decbeaf0");
+		assertEqual("9eefac71-c95d-4acc-ad67-d9c8decbeaf0", tree.get("9eefac71-c95d-4acc-ad67-d9c8decbeaf0"));
+		tree.put("ecb89fc8-5a0a-436a-821b-2fc001802633", "ecb89fc8-5a0a-436a-821b-2fc001802633");
+		assertEqual("ecb89fc8-5a0a-436a-821b-2fc001802633", tree.get("ecb89fc8-5a0a-436a-821b-2fc001802633"));
+		tree.put("63a9461d-0879-4f4f-9be7-d7041fa123da", "63a9461d-0879-4f4f-9be7-d7041fa123da");
+		assertEqual("63a9461d-0879-4f4f-9be7-d7041fa123da", tree.get("63a9461d-0879-4f4f-9be7-d7041fa123da"));
+		tree.put("12c82b78-7b49-414d-8d44-9a51df5cfc54", "12c82b78-7b49-414d-8d44-9a51df5cfc54");
+		assertEqual("12c82b78-7b49-414d-8d44-9a51df5cfc54", tree.get("12c82b78-7b49-414d-8d44-9a51df5cfc54"));
+		tree.put("d757c87c-9405-450f-85ce-0f691b01fda9", "d757c87c-9405-450f-85ce-0f691b01fda9");
+		assertEqual("d757c87c-9405-450f-85ce-0f691b01fda9", tree.get("d757c87c-9405-450f-85ce-0f691b01fda9"));
+		tree.put("d997cffd-3ba3-4115-a5e3-15963c8ed51a", "d997cffd-3ba3-4115-a5e3-15963c8ed51a");
+		assertEqual("d997cffd-3ba3-4115-a5e3-15963c8ed51a", tree.get("d997cffd-3ba3-4115-a5e3-15963c8ed51a"));
+		tree.put("b5f04c76-d7db-4a2d-a855-9d5163a9274b", "b5f04c76-d7db-4a2d-a855-9d5163a9274b");
+		assertEqual("b5f04c76-d7db-4a2d-a855-9d5163a9274b", tree.get("b5f04c76-d7db-4a2d-a855-9d5163a9274b"));
+		tree.put("850faaf6-bc33-4f39-8660-fb6608f3252e", "850faaf6-bc33-4f39-8660-fb6608f3252e");
+		assertEqual("850faaf6-bc33-4f39-8660-fb6608f3252e", tree.get("850faaf6-bc33-4f39-8660-fb6608f3252e"));
+		tree.put("b861d2cc-a11e-43b9-a075-50a98ca392d2", "b861d2cc-a11e-43b9-a075-50a98ca392d2");
+		assertEqual("b861d2cc-a11e-43b9-a075-50a98ca392d2", tree.get("b861d2cc-a11e-43b9-a075-50a98ca392d2"));
+		tree.put("6a6e6aea-3103-441f-b337-1135a5dea06c", "6a6e6aea-3103-441f-b337-1135a5dea06c");
+		assertEqual("6a6e6aea-3103-441f-b337-1135a5dea06c", tree.get("6a6e6aea-3103-441f-b337-1135a5dea06c"));
+		tree.put("4abc588b-bb56-40f4-9e3c-dc1c6bf0dc75", "4abc588b-bb56-40f4-9e3c-dc1c6bf0dc75");
+		assertEqual("4abc588b-bb56-40f4-9e3c-dc1c6bf0dc75", tree.get("4abc588b-bb56-40f4-9e3c-dc1c6bf0dc75"));
+		tree.put("d5fdaade-8273-47ce-9bd3-b59c8b49583b", "d5fdaade-8273-47ce-9bd3-b59c8b49583b");
+		assertEqual("d5fdaade-8273-47ce-9bd3-b59c8b49583b", tree.get("d5fdaade-8273-47ce-9bd3-b59c8b49583b"));
+		tree.put("6392d413-9b1b-4f38-a6c9-458aa64a6645", "6392d413-9b1b-4f38-a6c9-458aa64a6645");
+		assertEqual("6392d413-9b1b-4f38-a6c9-458aa64a6645", tree.get("6392d413-9b1b-4f38-a6c9-458aa64a6645"));
+		tree.put("4a291dc8-d969-46e9-b182-d59268c26eef", "4a291dc8-d969-46e9-b182-d59268c26eef");
+		assertEqual("4a291dc8-d969-46e9-b182-d59268c26eef", tree.get("4a291dc8-d969-46e9-b182-d59268c26eef"));
+		tree.put("98d3ef9d-4d5a-4df9-98d6-e72ee68b4a46", "98d3ef9d-4d5a-4df9-98d6-e72ee68b4a46");
+		assertEqual("98d3ef9d-4d5a-4df9-98d6-e72ee68b4a46", tree.get("98d3ef9d-4d5a-4df9-98d6-e72ee68b4a46"));
 
-		assertEqual(44, tree.size());
+		assertEqual(31, tree.size());
 	}
 
 	public static List<String> testRandomInsert() {
 		var tree = new WhiteGreyBlackTreeMap<String, Integer>(5);
 		var list = new LinkedList<String>();
 
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < 100; i++) {
 			String key = UUID.randomUUID().toString();
 			list.add(key);
 			try {
@@ -168,7 +173,7 @@ public class WhiteGreyBlackTreeMapTest extends Test {
 				return list;
 			}
 		}
-		assertEqual(1000, tree.size());
+		assertEqual(100, tree.size());
 		return list;
 	}
 

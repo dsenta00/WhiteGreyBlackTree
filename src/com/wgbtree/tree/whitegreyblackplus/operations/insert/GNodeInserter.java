@@ -1,8 +1,9 @@
 package com.wgbtree.tree.whitegreyblackplus.operations.insert;
 
+import com.wgbtree.tree.whitegreyblackplus.constants.LeakPolicy;
 import com.wgbtree.tree.whitegreyblackplus.creator.GNodeCreator;
-import com.wgbtree.tree.whitegreyblackplus.entries.EntriesList.LeakPolicy;
 import com.wgbtree.tree.whitegreyblackplus.node.GNode;
+import com.wgbtree.tree.whitegreyblackplus.operations.rotator.GNodeRotator;
 import lombok.NoArgsConstructor;
 
 import java.util.AbstractMap.SimpleEntry;
@@ -37,16 +38,17 @@ public final class GNodeInserter {
 
 		if (entries.lastEntry().getKey().compareTo(key) < 0) {
 			var result = insertRight(node, key, value, keyHash, order, rank, oldValue, allowDuplicates);
-			//GNodeRotator.tryRotateLeft(node, order, rank, allowDuplicates);
+			GNodeRotator.tryRotateLeft(node, order, rank, allowDuplicates);
 			return result;
 		}
 
 		if (entries.firstEntry().getKey().compareTo(key) > 0) {
 			var result = insertLeft(node, key, value, keyHash, order, rank, oldValue, allowDuplicates);
-			//GNodeRotator.tryRotateRight(node, order, rank, allowDuplicates);
+			GNodeRotator.tryRotateRight(node, order, rank, allowDuplicates);
 			return result;
 		}
 
+		var leakPolicy = node.setLeakPolicy();
 		var leakedEntry = insertHere(node, key, value);
 
 		if (leakedEntry.getKey() != key) {
@@ -55,7 +57,7 @@ public final class GNodeInserter {
 			keyHash = isNull(key) ? 0 : key.hashCode();
 		}
 
-		if (node.getLeakPolicy() == LeakPolicy.SMALLEST) {
+		if (leakPolicy == LeakPolicy.SMALLEST) {
 			return insertLeft(node, key, value, keyHash, order, rank, oldValue, allowDuplicates);
 		} else {
 			return insertRight(node, key, value, keyHash, order, rank, oldValue, allowDuplicates);

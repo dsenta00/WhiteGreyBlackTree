@@ -9,7 +9,6 @@ import com.wgbtree.tree.whitegreyblackplus.operations.insert.GNodeInserter;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
 
 import static com.wgbtree.tree.whitegreyblackplus.constants.Constants.*;
 import static java.util.Objects.isNull;
@@ -63,14 +62,6 @@ public class WhiteGreyBlackTreeMap<K extends Comparable<K>, T> implements AsTree
 	public K getMax() {
 		var max = GNodeGetter.getMax(gNode);
 		return isNull(max) ? null : max.getKey();
-	}
-
-	public int getNumberOfNodes() {
-		throw new UnsupportedOperationException("Not implemented yet.");
-	}
-
-	public int getNumberOfEmptyNodes() {
-		throw new UnsupportedOperationException("Not implemented yet.");
 	}
 
 	@Override

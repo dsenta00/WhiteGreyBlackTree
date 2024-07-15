@@ -1,5 +1,10 @@
 package com.wgbtree.tree.whitegreyblackplus.entries;
 
+import com.wgbtree.tree.whitegreyblackplus.constants.LeakPolicy;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+
 public class EntriesListNonMergeableDescSmallest<K extends Comparable<K>, T> extends EntriesList<K, T> {
 
 	public EntriesListNonMergeableDescSmallest(int capacityLimit) {
@@ -11,22 +16,30 @@ public class EntriesListNonMergeableDescSmallest<K extends Comparable<K>, T> ext
 	}
 
 	@Override
-	protected boolean allowMergingOnSameKey() {
-		return false;
-	}
-
-	@Override
-	public Order order() {
-		return Order.DESCENDING;
-	}
-
-	@Override
-	public LeakPolicy leakPolicy() {
-		return LeakPolicy.SMALLEST;
-	}
-
-	@Override
 	public EntriesList<K, T> setPolicy(LeakPolicy leakPolicy) {
 		return leakPolicy == LeakPolicy.LARGEST ? new EntriesListNonMergeableDescLargest<>(this) : this;
+	}
+
+	public boolean add(Map.Entry<K, Set<T>> entry, AtomicReference<Map.Entry<K, Set<T>>> leakedEntry) {
+		// Reset leaked entry
+		leakedEntry.set(null);
+
+		if (entry == null) {
+			throw new NullPointerException();
+		}
+
+		Optional<Map.Entry<K, Set<T>>> existingEntryOptional = find(entry.getKey());
+		if (existingEntryOptional.isPresent()) {
+			replaceValue(entry, leakedEntry, existingEntryOptional.get());
+		} else {
+			if (size >= capacityLimit) {
+				handleLeakOfLastEntryDesc(entry, leakedEntry);
+			} else {
+				array[size++] = entry;
+			}
+
+			Arrays.sort(array, 0, size, Map.Entry.comparingByKey(Comparator.reverseOrder()));
+		}
+		return true;
 	}
 }

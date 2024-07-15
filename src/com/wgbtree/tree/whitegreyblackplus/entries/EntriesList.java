@@ -1,9 +1,9 @@
 package com.wgbtree.tree.whitegreyblackplus.entries;
 
+import com.wgbtree.tree.whitegreyblackplus.constants.LeakPolicy;
 import lombok.Getter;
 
 import java.util.*;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -11,18 +11,10 @@ import static com.wgbtree.tree.whitegreyblackplus.constants.Constants.LINEAR_SEA
 
 public abstract class EntriesList<K extends Comparable<K>, T> implements List<Entry<K, Set<T>>> {
 
-	public enum Order {
-		ASCENDING, DESCENDING
-	}
-
-	public enum LeakPolicy {
-		SMALLEST, LARGEST
-	}
-
-	private final Entry<K, Set<T>>[] array;
-	private int size;
+	protected final Entry<K, Set<T>>[] array;
+	protected int size;
 	@Getter
-	private final int capacityLimit;
+	protected final int capacityLimit;
 
 	public EntriesList(int capacityLimit) {
 		this.capacityLimit = capacityLimit;
@@ -37,61 +29,15 @@ public abstract class EntriesList<K extends Comparable<K>, T> implements List<En
 	}
 
 	public Entry<K, Set<T>> firstEntry() {
-		return array[0];
+		return size > 0 ? array[0] : null;
 	}
 
 	public Entry<K, Set<T>> lastEntry() {
-		return array[size - 1];
+		return size > 0 ? array[size - 1] : null;
 	}
 
-	protected abstract boolean allowMergingOnSameKey();
-	public abstract Order order();
-	public abstract LeakPolicy leakPolicy();
 	public abstract EntriesList<K, T> setPolicy(LeakPolicy leakPolicy);
-
-	public boolean add(Entry<K, Set<T>> entry, AtomicReference<Entry<K, Set<T>>> leakedEntry) {
-		// Reset leaked entry
-		leakedEntry.set(null);
-
-		if (entry == null) {
-			throw new NullPointerException();
-		}
-
-		Optional<Entry<K, Set<T>>> existingEntryOptional = find(entry.getKey());
-		if (existingEntryOptional.isPresent()) {
-			var entryToChange = existingEntryOptional.get();
-
-			if (!allowMergingOnSameKey()) {
-				var oldValue = entryToChange.getValue();
-				entryToChange.setValue(entry.getValue());
-				leakedEntry.set(new SimpleEntry<>(entryToChange.getKey(), oldValue));
-				return true;
-			}
-
-			existingEntryOptional.get().getValue().addAll(entry.getValue());
-		} else {
-			if (size >= capacityLimit) {
-				if (leakPolicy() == LeakPolicy.SMALLEST) {
-					if (order() == Order.ASCENDING) {
-						handleLeakOfFirstEntryAsc(entry, leakedEntry);
-					} else {
-						handleLeakOfLastEntryDesc(entry, leakedEntry);
-					}
-				} else {
-					if (order() == Order.ASCENDING) {
-						handleLeakOfLastEntryAsc(entry, leakedEntry);
-					} else {
-						handleLeakOfFirstEntryDesc(entry, leakedEntry);
-					}
-				}
-			} else {
-				array[size++] = entry;
-			}
-
-			sortList();
-		}
-		return true;
-	}
+	public abstract boolean add(Entry<K, Set<T>> entry, AtomicReference<Entry<K, Set<T>>> leakedEntry);
 
 	public boolean add(Entry<K, Set<T>> entry) {
 		return add(entry, new AtomicReference<>());
@@ -134,6 +80,12 @@ public abstract class EntriesList<K extends Comparable<K>, T> implements List<En
 		} else {
 			return Optional.empty();
 		}
+	}
+
+	protected void replaceValue(Entry<K, Set<T>> entry, AtomicReference<Entry<K, Set<T>>> leakedEntry, Entry<K, Set<T>> entryToChange) {
+		var oldValue = entryToChange.getValue();
+		entryToChange.setValue(entry.getValue());
+		leakedEntry.set(new AbstractMap.SimpleEntry<>(entryToChange.getKey(), oldValue));
 	}
 
 	protected int findByIndex(K key) {
@@ -216,14 +168,6 @@ public abstract class EntriesList<K extends Comparable<K>, T> implements List<En
 		} else {
 			leakedEntry.set(array[size - 1]);
 			array[size - 1] = entry;
-		}
-	}
-
-	private void sortList() {
-		if (order() == Order.ASCENDING) {
-			Arrays.sort(array, 0, size, Entry.comparingByKey());
-		} else {
-			Arrays.sort(array, 0, size, Entry.comparingByKey(Comparator.reverseOrder()));
 		}
 	}
 
