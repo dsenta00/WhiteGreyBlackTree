@@ -32,7 +32,7 @@ public class EntriesListMergeableDescLargest<K extends Comparable<K>, T> extends
 		if (existingEntryOptional.isPresent()) {
 			existingEntryOptional.get().getValue().addAll(entry.getValue());
 		} else {
-			if (size >= capacityLimit) {
+			if (size >= array.length) {
 				handleLeakOfFirstEntryDesc(entry, leakedEntry);
 			} else {
 				array[size++] = entry;

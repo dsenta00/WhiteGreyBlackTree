@@ -35,7 +35,7 @@ public class EntriesListMergeableAscSmallest<K extends Comparable<K>, T> extends
 		if (existingEntryOptional.isPresent()) {
 			existingEntryOptional.get().getValue().addAll(entry.getValue());
 		} else {
-			if (size >= capacityLimit) {
+			if (size >= array.length) {
 				handleLeakOfFirstEntryAsc(entry, leakedEntry);
 			} else {
 				array[size++] = entry;

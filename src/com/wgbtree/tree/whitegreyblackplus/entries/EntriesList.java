@@ -1,7 +1,6 @@
 package com.wgbtree.tree.whitegreyblackplus.entries;
 
 import com.wgbtree.tree.whitegreyblackplus.constants.LeakPolicy;
-import lombok.Getter;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -13,18 +12,14 @@ public abstract class EntriesList<K extends Comparable<K>, T> implements List<En
 
 	protected final Entry<K, Set<T>>[] array;
 	protected int size;
-	@Getter
-	protected final int capacityLimit;
 
 	public EntriesList(int capacityLimit) {
-		this.capacityLimit = capacityLimit;
 		this.array = (Entry<K, Set<T>>[]) new Entry<?, ?>[capacityLimit];
 		this.size = 0;
 	}
 
 	protected EntriesList(EntriesList<K, T> entriesList) {
-		this.capacityLimit = entriesList.capacityLimit;
-		this.array = Arrays.copyOf(entriesList.array, entriesList.array.length);
+		this.array = entriesList.array;
 		this.size = entriesList.size;
 	}
 
@@ -177,7 +172,7 @@ public abstract class EntriesList<K extends Comparable<K>, T> implements List<En
 	}
 
 	public boolean isFull() {
-		return size == capacityLimit;
+		return size == array.length;
 	}
 
 	@Override
@@ -324,6 +319,10 @@ public abstract class EntriesList<K extends Comparable<K>, T> implements List<En
 	@Override
 	public List<Map.Entry<K, Set<T>>> subList(int fromIndex, int toIndex) {
 		throw new UnsupportedOperationException("Not implemented yet.");
+	}
+
+	public int getCapacity() {
+		return array.length;
 	}
 }
 

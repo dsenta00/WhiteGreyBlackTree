@@ -32,7 +32,7 @@ public class EntriesListMergeableDescSmallest<K extends Comparable<K>, T> extend
 		if (existingEntryOptional.isPresent()) {
 			existingEntryOptional.get().getValue().addAll(entry.getValue());
 		} else {
-			if (size >= capacityLimit) {
+			if (size >= array.length) {
 				handleLeakOfLastEntryDesc(entry, leakedEntry);
 			} else {
 				array[size++] = entry;

@@ -35,7 +35,7 @@ public class EntriesListNonMergeableAscLargest<K extends Comparable<K>, T> exten
 		if (existingEntryOptional.isPresent()) {
 			replaceValue(entry, leakedEntry, existingEntryOptional.get());
 		} else {
-			if (size >= capacityLimit) {
+			if (size >= array.length) {
 				handleLeakOfLastEntryAsc(entry, leakedEntry);
 			} else {
 				array[size++] = entry;

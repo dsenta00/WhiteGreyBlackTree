@@ -1,10 +1,12 @@
 package com.wgbtree.tree.whitegreyblackplus;
 
 import com.wgbtree.tree.AsTree;
-import com.wgbtree.tree.whitegreyblackplus.handler.GNodeHandler;
-import com.wgbtree.tree.whitegreyblackplus.node.GNode;
-import com.wgbtree.tree.whitegreyblackplus.operations.get.GNodeGetter;
-import com.wgbtree.tree.whitegreyblackplus.operations.insert.GNodeInserter;
+import com.wgbtree.tree.whitegreyblackplus.handler.GreyHandler;
+import com.wgbtree.tree.whitegreyblackplus.node.Grey;
+import com.wgbtree.tree.whitegreyblackplus.node.LevelInfo;
+import com.wgbtree.tree.whitegreyblackplus.operations.get.GreyGetter;
+import com.wgbtree.tree.whitegreyblackplus.operations.insert.GreyInserter;
+import lombok.Getter;
 
 import java.io.Serializable;
 import java.util.*;
@@ -15,73 +17,71 @@ import static java.util.Objects.isNull;
 
 /**
  * The fastest Data Structure
+ *
  * @param <K>
  * @param <T>
  */
 public class WhiteGreyBlackTreeMap<K extends Comparable<K>, T> implements AsTree<K, T>, Serializable {
-	private final int rank;
-	private final int order;
-	private final boolean allowDuplicates;
-	private GNode<K, T> gNode;
+	@Getter
+	private final LevelInfo firstLevel;
+	@Getter
+	private Grey<K, T> grey;
 
 	public WhiteGreyBlackTreeMap() {
-		this.rank = DEFAULT_RANK;
-		this.order = DEFAULT_ORDER;
-		this.allowDuplicates = DEFAULT_ALLOW_DUPLICATES;
-		this.gNode = null;
+		firstLevel = LevelInfo.of(DEFAULT_RANK, DEFAULT_ORDER, DEFAULT_ALLOW_DUPLICATES, DEFAULT_DECREASING_PRIMES);
+		grey = null;
 	}
 
 	public WhiteGreyBlackTreeMap(int order) {
-		this.rank = DEFAULT_RANK;
-		this.order = assertOrder(order);
-		this.allowDuplicates = DEFAULT_ALLOW_DUPLICATES;
-		this.gNode = null;
+		firstLevel = LevelInfo.of(assertOrder(order), DEFAULT_RANK, DEFAULT_ALLOW_DUPLICATES, DEFAULT_DECREASING_PRIMES);
+		grey = null;
 	}
 
 	public WhiteGreyBlackTreeMap(int order, boolean allowDuplicates) {
-		this.rank = DEFAULT_RANK;
-		this.order = assertOrder(order);
-		this.allowDuplicates = allowDuplicates;
-		this.gNode = null;
+		firstLevel = LevelInfo.of(assertOrder(order), DEFAULT_RANK, allowDuplicates, DEFAULT_DECREASING_PRIMES);
+		grey = null;
 	}
 
 	public WhiteGreyBlackTreeMap(int rank, int order, boolean allowDuplicates) {
-		this.rank = rank;
-		this.order = assertOrder(order);
-		this.allowDuplicates = allowDuplicates;
-		gNode = null;
+		firstLevel = LevelInfo.of(assertOrder(order), rank, allowDuplicates, DEFAULT_DECREASING_PRIMES);
+		grey = null;
+	}
+
+	public WhiteGreyBlackTreeMap(int order, boolean allowDuplicates, int effectiveCapacity) {
+		firstLevel = LevelInfo.of(order, effectiveCapacity, allowDuplicates);
+		grey = null;
 	}
 
 	@Override
 	public K getMin() {
-		var min = GNodeGetter.getMin(gNode);
+		var min = GreyGetter.getMin(grey);
 		return isNull(min) ? null : min.getKey();
 	}
 
 	@Override
 	public K getMax() {
-		var max = GNodeGetter.getMax(gNode);
+		var max = GreyGetter.getMax(grey);
 		return isNull(max) ? null : max.getKey();
 	}
 
 	@Override
 	public int depth() {
-		return GNodeHandler.depth(gNode);
+		return GreyHandler.depth(grey);
 	}
 
 	@Override
 	public String getName() {
-		return "WGB[" + rank + "-" + order + "]";
+		return "WGB[" + firstLevel.getRank() + "-" + firstLevel.getOrder() + "]";
 	}
 
 	@Override
 	public List<Set<T>> getAllAsc() {
-		return GNodeGetter.getAllAsc(gNode);
+		return GreyGetter.getAllAsc(grey);
 	}
 
 	@Override
 	public List<Set<T>> getAllDesc() {
-		return GNodeGetter.getAllDesc(gNode);
+		return GreyGetter.getAllDesc(grey);
 	}
 
 	@Override
@@ -92,7 +92,7 @@ public class WhiteGreyBlackTreeMap<K extends Comparable<K>, T> implements AsTree
 
 		List<K> keysCopy = new LinkedList<>(keys);
 		keysCopy.sort(Comparator.naturalOrder());
-		return GNodeGetter.getInAsc(gNode, keysCopy);
+		return GreyGetter.getInAsc(grey, keysCopy);
 	}
 
 	@Override
@@ -202,19 +202,19 @@ public class WhiteGreyBlackTreeMap<K extends Comparable<K>, T> implements AsTree
 
 	@Override
 	public int size() {
-		return GNodeHandler.size(gNode);
+		return GreyHandler.size(grey);
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return GNodeHandler.size(gNode) == 0;
+		return GreyHandler.size(grey) == 0;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public boolean containsKey(Object key) {
 		K k = (K) key;
-		return !GNodeGetter.get(gNode, k, k.hashCode()).isEmpty();
+		return !GreyGetter.get(grey, k, k.hashCode()).isEmpty();
 	}
 
 	@Override
@@ -226,7 +226,7 @@ public class WhiteGreyBlackTreeMap<K extends Comparable<K>, T> implements AsTree
 	@SuppressWarnings("unchecked")
 	public T get(Object key) {
 		K k = (K) key;
-		var values = GNodeGetter.get(gNode, k, k.hashCode());
+		var values = GreyGetter.get(grey, k, k.hashCode());
 		if (values.isEmpty()) {
 			return null;
 		}
@@ -239,13 +239,13 @@ public class WhiteGreyBlackTreeMap<K extends Comparable<K>, T> implements AsTree
 	}
 
 	public Set<T> getValues(K key) {
-		return GNodeGetter.get(gNode, key, key.hashCode());
+		return GreyGetter.get(grey, key, key.hashCode());
 	}
 
 	@Override
 	public T put(K key, T value) {
 		var oldValue = new AtomicReference<T>();
-		gNode = GNodeInserter.insert(gNode, key, Set.of(value), key.hashCode(), order, rank, oldValue, allowDuplicates);
+		grey = GreyInserter.insert(grey, key, Set.of(value), key.hashCode(), oldValue, firstLevel);
 		return oldValue.get();
 	}
 
@@ -261,7 +261,7 @@ public class WhiteGreyBlackTreeMap<K extends Comparable<K>, T> implements AsTree
 
 	@Override
 	public void clear() {
-		gNode = null;
+		grey = null;
 	}
 
 	@Override

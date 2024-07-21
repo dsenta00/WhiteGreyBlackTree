@@ -22,7 +22,6 @@ public class Main {
 	private static final int MIN_TOTAL_COUNT = 500_000;
 	private static final int MAX_TOTAL_COUNT = 8_000_000;
 
-
 	public static void flushBuffer() {
 		buffers.forEach((operation, map) -> map.forEach((treeName, buffer) -> flushBuffer(operation, treeName, buffer)));
 	}
@@ -79,6 +78,7 @@ public class Main {
 		}));
 
 		var trees = List.of(
+				new TreeMapAsTree<String, Boolean>(),
 				new BPlusTreeMap<String, Boolean>(3),
 				new BPlusTreeMap<String, Boolean>(20),
 				new BPlusTreeMap<String, Boolean>(50),
@@ -105,9 +105,7 @@ public class Main {
 				new WhiteGreyBlackTreeMap<String, Boolean>(7, 100, false),
 				new WhiteGreyBlackTreeMap<String, Boolean>(7, 150, false),
 				new WhiteGreyBlackTreeMap<String, Boolean>(7, 200, false),
-				new WhiteGreyBlackTreeMap<String, Boolean>(1, false),
-				new TreeMapAsTree<String, Boolean>(),
-				new WhiteGreyBlackTreeMap<String, Boolean>() // default 10
+				new WhiteGreyBlackTreeMap<String, Boolean>(1, false)
 		);
 
 		createCsvFiles(trees);

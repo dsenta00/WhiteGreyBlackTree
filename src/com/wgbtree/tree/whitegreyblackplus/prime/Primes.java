@@ -2,16 +2,18 @@ package com.wgbtree.tree.whitegreyblackplus.prime;
 
 public class Primes {
 
+	public static final int FIRST_PRIME = 2;
+
 	public static boolean isPrime(int number) {
-		if (number < 2) {
+		if (number < FIRST_PRIME) {
 			return false;
 		}
 
-		if (number == 2 || number == 3) {
+		if (number == FIRST_PRIME || number == 3) {
 			return true;
 		}
 
-		if (number % 2 == 0 || number % 3 == 0) {
+		if (number % FIRST_PRIME == 0 || number % 3 == 0) {
 			return false;
 		}
 
@@ -60,6 +62,51 @@ public class Primes {
 				return 23;
 			default:
 				for (int i = number + 1; ; i++) {
+					if (isPrime(i)) {
+						return i;
+					}
+				}
+		}
+	}
+
+	public static int prevPrime(int number) {
+		if (number < FIRST_PRIME) {
+			return FIRST_PRIME;
+		}
+
+		switch (number) {
+			case 2:
+			case 3:
+			  return 2;
+			case 4:
+			case 5:
+			  return 3;
+			case 6:
+			case 7:
+			  return 5;
+			case 8:
+			case 9:
+			case 10:
+			case 11:
+			  return 7;
+			case 12:
+			case 13:
+			  return 11;
+			case 14:
+			case 15:
+			case 16:
+			case 17:
+			  return 13;
+			case 18:
+			case 19:
+			  return 17;
+			case 20:
+			case 21:
+			case 22:
+			case 23:
+			  return 19;
+			default:
+				for (int i = number - 1; ; i--) {
 					if (isPrime(i)) {
 						return i;
 					}

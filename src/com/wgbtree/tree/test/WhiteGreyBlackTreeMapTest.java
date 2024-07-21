@@ -1,10 +1,11 @@
 package com.wgbtree.tree.test;
 
 import com.wgbtree.tree.whitegreyblackplus.WhiteGreyBlackTreeMap;
-import com.wgbtree.tree.whitegreyblackplus.node.BNode;
-import com.wgbtree.tree.whitegreyblackplus.node.GNode;
-import com.wgbtree.tree.whitegreyblackplus.node.WNode;
-import com.wgbtree.tree.whitegreyblackplus.operations.delete.GNodeRemover;
+import com.wgbtree.tree.whitegreyblackplus.calculator.RankCalculator;
+import com.wgbtree.tree.whitegreyblackplus.node.Black;
+import com.wgbtree.tree.whitegreyblackplus.node.Grey;
+import com.wgbtree.tree.whitegreyblackplus.node.White;
+import com.wgbtree.tree.whitegreyblackplus.operations.delete.GreyRemover;
 
 import java.util.*;
 import java.util.AbstractMap.SimpleEntry;
@@ -15,7 +16,10 @@ import java.util.stream.IntStream;
 public class WhiteGreyBlackTreeMapTest extends Test {
 
 	public static void main(String[] args) {
+		testGreatestRank();
 		testInsert();
+		testInsert(new WhiteGreyBlackTreeMap<>(5));
+		testInsert(new WhiteGreyBlackTreeMap<>(5, false, 1000));
 		testRemoveMin();
 		testRemoveMax();
 		testUuidInsert();
@@ -31,63 +35,72 @@ public class WhiteGreyBlackTreeMapTest extends Test {
 				});
 	}
 
+	public static void testGreatestRank() {
+		assertEqual(2, RankCalculator.calculateGreatestRank(1, 1));
+		assertEqual(2, RankCalculator.calculateGreatestRank(1, 3));
+		assertEqual(2, RankCalculator.calculateGreatestRank(1, 7));
+		assertEqual(3, RankCalculator.calculateGreatestRank(1, 8));
+		assertEqual(3, RankCalculator.calculateGreatestRank(1, 39));
+		assertEqual(5, RankCalculator.calculateGreatestRank(1, 40));
+	}
+
 	public static void testRemoveMax() {
 		var leakEntry = new AtomicReference<Entry<Integer, Set<Integer>>>();
 
-		var gNode = new GNode<Integer, Integer>(3, false);
-		gNode.getEntries().add(new SimpleEntry<>(4, Set.of(4)), leakEntry);
-		gNode.getEntries().add(new SimpleEntry<>(5, Set.of(5)), leakEntry);
-		gNode.getEntries().add(new SimpleEntry<>(6, Set.of(6)), leakEntry);
+		var grey = new Grey<Integer, Integer>(3, false);
+		grey.getEntries().add(new SimpleEntry<>(4, Set.of(4)), leakEntry);
+		grey.getEntries().add(new SimpleEntry<>(5, Set.of(5)), leakEntry);
+		grey.getEntries().add(new SimpleEntry<>(6, Set.of(6)), leakEntry);
 
-		var wNode = new WNode<Integer, Integer>(3, 2, false);
-		wNode.getEntries().add(new SimpleEntry<>(1, Set.of(1)), leakEntry);
-		wNode.getEntries().add(new SimpleEntry<>(2, Set.of(2)), leakEntry);
-		wNode.getEntries().add(new SimpleEntry<>(3, Set.of(3)), leakEntry);
+		var white = new White<Integer, Integer>(3, 2, false);
+		white.getEntries().add(new SimpleEntry<>(1, Set.of(1)), leakEntry);
+		white.getEntries().add(new SimpleEntry<>(2, Set.of(2)), leakEntry);
+		white.getEntries().add(new SimpleEntry<>(3, Set.of(3)), leakEntry);
 
-		var bNode = new BNode<Integer, Integer>(3, 2, false);
-		bNode.getEntries().add(new SimpleEntry<>(7, Set.of(7)), leakEntry);
-		bNode.getEntries().add(new SimpleEntry<>(8, Set.of(8)), leakEntry);
-		bNode.getEntries().add(new SimpleEntry<>(9, Set.of(9)), leakEntry);
+		var black = new Black<Integer, Integer>(3, 2, false);
+		black.getEntries().add(new SimpleEntry<>(7, Set.of(7)), leakEntry);
+		black.getEntries().add(new SimpleEntry<>(8, Set.of(8)), leakEntry);
+		black.getEntries().add(new SimpleEntry<>(9, Set.of(9)), leakEntry);
 
-		gNode.setLeft(wNode);
-		gNode.setCountLeft(3);
-		gNode.setRight(bNode);
-		gNode.setCountRight(3);
+		grey.setLeft(white);
+		grey.setCountLeft(3);
+		grey.setRight(black);
+		grey.setCountRight(3);
 
 		for (int i = 9; i > 0; i--) {
-			var result = GNodeRemover.removeMax(gNode);
+			var result = GreyRemover.removeMax(grey);
 			assertEqual(i, result.getEntry().getKey());
-			gNode = (GNode<Integer, Integer>) result.getNode();
+			grey = (Grey<Integer, Integer>) result.getNode();
 		}
 	}
 
 	public static void testRemoveMin() {
 		var leakEntry = new AtomicReference<Entry<Integer, Set<Integer>>>();
 
-		var gNode = new GNode<Integer, Integer>(3, false);
-		gNode.getEntries().add(new SimpleEntry<>(4, Set.of(4)), leakEntry);
-		gNode.getEntries().add(new SimpleEntry<>(5, Set.of(5)), leakEntry);
-		gNode.getEntries().add(new SimpleEntry<>(6, Set.of(6)), leakEntry);
+		var grey = new Grey<Integer, Integer>(3, false);
+		grey.getEntries().add(new SimpleEntry<>(4, Set.of(4)), leakEntry);
+		grey.getEntries().add(new SimpleEntry<>(5, Set.of(5)), leakEntry);
+		grey.getEntries().add(new SimpleEntry<>(6, Set.of(6)), leakEntry);
 
-		var wNode = new WNode<Integer, Integer>(3, 2, false);
-		wNode.getEntries().add(new SimpleEntry<>(1, Set.of(1)), leakEntry);
-		wNode.getEntries().add(new SimpleEntry<>(2, Set.of(2)), leakEntry);
-		wNode.getEntries().add(new SimpleEntry<>(3, Set.of(3)), leakEntry);
+		var white = new White<Integer, Integer>(3, 2, false);
+		white.getEntries().add(new SimpleEntry<>(1, Set.of(1)), leakEntry);
+		white.getEntries().add(new SimpleEntry<>(2, Set.of(2)), leakEntry);
+		white.getEntries().add(new SimpleEntry<>(3, Set.of(3)), leakEntry);
 
-		var bNode = new BNode<Integer, Integer>(3, 2, false);
-		bNode.getEntries().add(new SimpleEntry<>(7, Set.of(7)), leakEntry);
-		bNode.getEntries().add(new SimpleEntry<>(8, Set.of(8)), leakEntry);
-		bNode.getEntries().add(new SimpleEntry<>(9, Set.of(9)), leakEntry);
+		var black = new Black<Integer, Integer>(3, 2, false);
+		black.getEntries().add(new SimpleEntry<>(7, Set.of(7)), leakEntry);
+		black.getEntries().add(new SimpleEntry<>(8, Set.of(8)), leakEntry);
+		black.getEntries().add(new SimpleEntry<>(9, Set.of(9)), leakEntry);
 
-		gNode.setLeft(wNode);
-		gNode.setCountLeft(3);
-		gNode.setRight(bNode);
-		gNode.setCountRight(3);
+		grey.setLeft(white);
+		grey.setCountLeft(3);
+		grey.setRight(black);
+		grey.setCountRight(3);
 
 		for (int i = 1; i < 10; i++) {
-			var result = GNodeRemover.removeMin(gNode);
+			var result = GreyRemover.removeMin(grey);
 			assertEqual(i, result.getEntry().getKey());
-			gNode = (GNode<Integer, Integer>) result.getNode();
+			grey = (Grey<Integer, Integer>) result.getNode();
 		}
 	}
 
@@ -164,7 +177,7 @@ public class WhiteGreyBlackTreeMapTest extends Test {
 		var tree = new WhiteGreyBlackTreeMap<String, Integer>(5);
 		var list = new LinkedList<String>();
 
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < 200; i++) {
 			String key = UUID.randomUUID().toString();
 			list.add(key);
 			try {
@@ -173,8 +186,16 @@ public class WhiteGreyBlackTreeMapTest extends Test {
 				return list;
 			}
 		}
-		assertEqual(100, tree.size());
+		assertEqual(200, tree.size());
 		return list;
+	}
+
+	public static void testInsert(WhiteGreyBlackTreeMap<Integer, Integer> tree) {
+		IntStream.range(0, 1000).forEach(i -> tree.put(i, i));
+
+		var grey = tree.getGrey();
+		assertEqual(495, grey.getCountLeft());
+		assertEqual(500, grey.getCountRight());
 	}
 
 	public static void testInsert() {
@@ -206,6 +227,10 @@ public class WhiteGreyBlackTreeMapTest extends Test {
 
 		tree.put(11, 11);
 
+		var grey = tree.getGrey();
+		assertEqual(1, grey.getCountLeft());
+		assertEqual(5, grey.getCountRight());
+
 		assertEqual(11, tree.size());
 		IntStream.range(1, 12).forEach(i -> assertEqual(i, tree.get(i)));
 		assertEqual(null, tree.get(12));
@@ -217,6 +242,10 @@ public class WhiteGreyBlackTreeMapTest extends Test {
 		tree.put(14, 14);
 		tree.put(15, 15);
 		tree.put(16, 16);
+
+		grey = tree.getGrey();
+		assertEqual(3, grey.getCountLeft());
+		assertEqual(8, grey.getCountRight());
 
 		assertEqual(16, tree.size());
 		IntStream.range(1, 17).forEach(i -> assertEqual(i, tree.get(i)));
