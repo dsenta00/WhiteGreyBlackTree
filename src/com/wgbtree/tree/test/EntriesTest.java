@@ -1,6 +1,6 @@
 package com.wgbtree.tree.test;
 
-import com.wgbtree.tree.whitegreyblackplus.entries.*;
+import com.wgbtree.tree.wgb.entries.*;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Map.Entry;
