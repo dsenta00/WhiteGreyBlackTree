@@ -2,7 +2,7 @@ package com.wgbtree.tree.test;
 
 public abstract class Test {
 
-	static void assertEqual(Object expected, Object actual) {
+	static void assertEquals(Object expected, Object actual) {
 		if (expected == null && actual == null) {
 		} else if (expected == null || actual == null) {
 			throw new AssertionError("Test failed, Expected: " + toString(expected) + ", Actual: " + toString(actual));

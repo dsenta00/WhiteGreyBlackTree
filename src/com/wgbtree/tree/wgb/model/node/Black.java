@@ -1,6 +1,6 @@
 package com.wgbtree.tree.wgb.model.node;
 
-import com.wgbtree.tree.wgb.entries.EntriesListMergeableAscSmallest;
+import com.wgbtree.tree.wgb.entries.EntriesListMergeableDescSmallest;
 import com.wgbtree.tree.wgb.entries.EntriesListNonMergeableDescSmallest;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -14,7 +14,7 @@ public class Black<K extends Comparable<K>, T> extends Node<K, T> implements Ser
 	private Grey<K, T>[] greys;
 
 	public Black(int order, int capacity, boolean allowMergingOnSameKey) {
-		super(allowMergingOnSameKey ? new EntriesListMergeableAscSmallest<>(order) : new EntriesListNonMergeableDescSmallest<>(order));
+		super(allowMergingOnSameKey ? new EntriesListMergeableDescSmallest<>(order) : new EntriesListNonMergeableDescSmallest<>(order));
 		setCapacity(capacity);
 	}
 

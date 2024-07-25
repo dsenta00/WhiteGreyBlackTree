@@ -9,6 +9,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.wgbtree.tree.wgb.constants.LeakPolicy.LARGEST;
+import static com.wgbtree.tree.wgb.constants.LeakPolicy.SMALLEST;
+
 public class EntriesListNonMergeableAscSmallest<K extends Comparable<K>, T> extends EntriesList<K, T> {
 	public EntriesListNonMergeableAscSmallest(int capacityLimit) {
 		super(capacityLimit);
@@ -19,8 +22,13 @@ public class EntriesListNonMergeableAscSmallest<K extends Comparable<K>, T> exte
 	}
 
 	@Override
-	public EntriesList<K, T> setPolicy(LeakPolicy leakPolicy) {
-		return leakPolicy == LeakPolicy.LARGEST ? new EntriesListNonMergeableAscLargest<>(this) : this;
+	public LeakPolicy getPolicy() {
+		return SMALLEST;
+	}
+
+	@Override
+	public EntriesList<K, T> convert(LeakPolicy leakPolicy) {
+		return leakPolicy == LARGEST ? new EntriesListNonMergeableAscLargest<>(this) : this;
 	}
 
 	public boolean add(Entry<K, Set<T>> entry, AtomicReference<Entry<K, Set<T>>> leakedEntry) {

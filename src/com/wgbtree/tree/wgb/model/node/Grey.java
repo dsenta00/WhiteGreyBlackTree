@@ -1,5 +1,6 @@
 package com.wgbtree.tree.wgb.model.node;
 
+import com.wgbtree.tree.wgb.calculator.LeakPolicyCalculator;
 import com.wgbtree.tree.wgb.constants.Direction;
 import com.wgbtree.tree.wgb.constants.LeakPolicy;
 import com.wgbtree.tree.wgb.entries.EntriesListMergeableAscLargest;
@@ -26,9 +27,8 @@ public class Grey<K extends Comparable<K>, T> extends Node<K, T> implements Seri
 	 * Calculate the leak policy of the entries list.
 	 */
 	public LeakPolicy setLeakPolicy() {
-		int countDiff = Math.abs(countLeft - countRight);
-		var leakPolicy = (countDiff > entries.getCapacity() && countLeft < countRight) ? LeakPolicy.SMALLEST : LeakPolicy.LARGEST;
-		entries = entries.setPolicy(leakPolicy);
+		var leakPolicy = LeakPolicyCalculator.calculate(entries.getPolicy(), countLeft, countRight, entries.getCapacity());
+		entries = entries.convert(leakPolicy);
 		return leakPolicy;
 	}
 

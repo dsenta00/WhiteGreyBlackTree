@@ -25,8 +25,8 @@ public class EntriesTest extends Test {
 
 	private static void testAscSmallest(EntriesList<Integer, Integer> entries) {
 		var leakEntry =  new AtomicReference<Entry<Integer, Set<Integer>>>();
-		assertEqual(0, entries.size());
-		assertEqual(null, entries.get(0));
+		assertEquals(0, entries.size());
+		assertEquals(null, entries.get(0));
 
 		entries.add(new SimpleEntry<>(5, Set.of(5)), leakEntry);
 		entries.add(new SimpleEntry<>(4, Set.of(4)), leakEntry);
@@ -34,39 +34,39 @@ public class EntriesTest extends Test {
 		entries.add(new SimpleEntry<>(2, Set.of(2)), leakEntry);
 		entries.add(new SimpleEntry<>(1, Set.of(1)), leakEntry);
 
-		assertEqual(5, entries.size());
-		assertEqual(1, entries.get(0).getKey());
-		assertEqual(2, entries.get(1).getKey());
-		assertEqual(3, entries.get(2).getKey());
-		assertEqual(4, entries.get(3).getKey());
-		assertEqual(5, entries.get(4).getKey());
-		assertEqual(null, leakEntry.get());
+		assertEquals(5, entries.size());
+		assertEquals(1, entries.get(0).getKey());
+		assertEquals(2, entries.get(1).getKey());
+		assertEquals(3, entries.get(2).getKey());
+		assertEquals(4, entries.get(3).getKey());
+		assertEquals(5, entries.get(4).getKey());
+		assertEquals(null, leakEntry.get());
 
 		entries.add(new SimpleEntry<>(0, Set.of(0)), leakEntry);
 
-		assertEqual(5, entries.size());
-		assertEqual(1, entries.get(0).getKey());
-		assertEqual(2, entries.get(1).getKey());
-		assertEqual(3, entries.get(2).getKey());
-		assertEqual(4, entries.get(3).getKey());
-		assertEqual(5, entries.get(4).getKey());
-		assertEqual(0, leakEntry.get().getKey());
+		assertEquals(5, entries.size());
+		assertEquals(1, entries.get(0).getKey());
+		assertEquals(2, entries.get(1).getKey());
+		assertEquals(3, entries.get(2).getKey());
+		assertEquals(4, entries.get(3).getKey());
+		assertEquals(5, entries.get(4).getKey());
+		assertEquals(0, leakEntry.get().getKey());
 
 		entries.add(new SimpleEntry<>(6, Set.of(6)), leakEntry);
 
-		assertEqual(5, entries.size());
-		assertEqual(2, entries.get(0).getKey());
-		assertEqual(3, entries.get(1).getKey());
-		assertEqual(4, entries.get(2).getKey());
-		assertEqual(5, entries.get(3).getKey());
-		assertEqual(6, entries.get(4).getKey());
-		assertEqual(1, leakEntry.get().getKey());
+		assertEquals(5, entries.size());
+		assertEquals(2, entries.get(0).getKey());
+		assertEquals(3, entries.get(1).getKey());
+		assertEquals(4, entries.get(2).getKey());
+		assertEquals(5, entries.get(3).getKey());
+		assertEquals(6, entries.get(4).getKey());
+		assertEquals(1, leakEntry.get().getKey());
 	}
 
 	private static void testDescLargest(EntriesList<Integer, Integer> entries) {
 		var leakEntry =  new AtomicReference<Entry<Integer, Set<Integer>>>();
-		assertEqual(0, entries.size());
-		assertEqual(null, entries.get(0));
+		assertEquals(0, entries.size());
+		assertEquals(null, entries.get(0));
 
 		entries.add(new SimpleEntry<>(5, Set.of(5)), leakEntry);
 		entries.add(new SimpleEntry<>(4, Set.of(4)), leakEntry);
@@ -74,39 +74,39 @@ public class EntriesTest extends Test {
 		entries.add(new SimpleEntry<>(2, Set.of(2)), leakEntry);
 		entries.add(new SimpleEntry<>(1, Set.of(1)), leakEntry);
 
-		assertEqual(5, entries.size());
-		assertEqual(5, entries.get(0).getKey());
-		assertEqual(4, entries.get(1).getKey());
-		assertEqual(3, entries.get(2).getKey());
-		assertEqual(2, entries.get(3).getKey());
-		assertEqual(1, entries.get(4).getKey());
-		assertEqual(null, leakEntry.get());
+		assertEquals(5, entries.size());
+		assertEquals(5, entries.get(0).getKey());
+		assertEquals(4, entries.get(1).getKey());
+		assertEquals(3, entries.get(2).getKey());
+		assertEquals(2, entries.get(3).getKey());
+		assertEquals(1, entries.get(4).getKey());
+		assertEquals(null, leakEntry.get());
 
 		entries.add(new SimpleEntry<>(6, Set.of(6)), leakEntry);
 
-		assertEqual(5, entries.size());
-		assertEqual(5, entries.get(0).getKey());
-		assertEqual(4, entries.get(1).getKey());
-		assertEqual(3, entries.get(2).getKey());
-		assertEqual(2, entries.get(3).getKey());
-		assertEqual(1, entries.get(4).getKey());
-		assertEqual(6, leakEntry.get().getKey());
+		assertEquals(5, entries.size());
+		assertEquals(5, entries.get(0).getKey());
+		assertEquals(4, entries.get(1).getKey());
+		assertEquals(3, entries.get(2).getKey());
+		assertEquals(2, entries.get(3).getKey());
+		assertEquals(1, entries.get(4).getKey());
+		assertEquals(6, leakEntry.get().getKey());
 
 		entries.add(new SimpleEntry<>(0, Set.of(0)), leakEntry);
 
-		assertEqual(5, entries.size());
-		assertEqual(4, entries.get(0).getKey());
-		assertEqual(3, entries.get(1).getKey());
-		assertEqual(2, entries.get(2).getKey());
-		assertEqual(1, entries.get(3).getKey());
-		assertEqual(0, entries.get(4).getKey());
-		assertEqual(5, leakEntry.get().getKey());
+		assertEquals(5, entries.size());
+		assertEquals(4, entries.get(0).getKey());
+		assertEquals(3, entries.get(1).getKey());
+		assertEquals(2, entries.get(2).getKey());
+		assertEquals(1, entries.get(3).getKey());
+		assertEquals(0, entries.get(4).getKey());
+		assertEquals(5, leakEntry.get().getKey());
 	}
 
 	private static void testAscLargest(EntriesList<Integer, Integer> entries) {
 		var leakEntry =  new AtomicReference<Entry<Integer, Set<Integer>>>();
-		assertEqual(0, entries.size());
-		assertEqual(null, entries.get(0));
+		assertEquals(0, entries.size());
+		assertEquals(null, entries.get(0));
 
 		entries.add(new SimpleEntry<>(1, Set.of(1)), leakEntry);
 		entries.add(new SimpleEntry<>(2, Set.of(2)), leakEntry);
@@ -114,39 +114,39 @@ public class EntriesTest extends Test {
 		entries.add(new SimpleEntry<>(4, Set.of(4)), leakEntry);
 		entries.add(new SimpleEntry<>(5, Set.of(5)), leakEntry);
 
-		assertEqual(5, entries.size());
-		assertEqual(1, entries.get(0).getKey());
-		assertEqual(2, entries.get(1).getKey());
-		assertEqual(3, entries.get(2).getKey());
-		assertEqual(4, entries.get(3).getKey());
-		assertEqual(5, entries.get(4).getKey());
-		assertEqual(null, leakEntry.get());
+		assertEquals(5, entries.size());
+		assertEquals(1, entries.get(0).getKey());
+		assertEquals(2, entries.get(1).getKey());
+		assertEquals(3, entries.get(2).getKey());
+		assertEquals(4, entries.get(3).getKey());
+		assertEquals(5, entries.get(4).getKey());
+		assertEquals(null, leakEntry.get());
 
 		entries.add(new SimpleEntry<>(6, Set.of(6)), leakEntry);
 
-		assertEqual(5, entries.size());
-		assertEqual(1, entries.get(0).getKey());
-		assertEqual(2, entries.get(1).getKey());
-		assertEqual(3, entries.get(2).getKey());
-		assertEqual(4, entries.get(3).getKey());
-		assertEqual(5, entries.get(4).getKey());
-		assertEqual(6, leakEntry.get().getKey());
+		assertEquals(5, entries.size());
+		assertEquals(1, entries.get(0).getKey());
+		assertEquals(2, entries.get(1).getKey());
+		assertEquals(3, entries.get(2).getKey());
+		assertEquals(4, entries.get(3).getKey());
+		assertEquals(5, entries.get(4).getKey());
+		assertEquals(6, leakEntry.get().getKey());
 
 		entries.add(new SimpleEntry<>(0, Set.of(0)), leakEntry);
 
-		assertEqual(5, entries.size());
-		assertEqual(0, entries.get(0).getKey());
-		assertEqual(1, entries.get(1).getKey());
-		assertEqual(2, entries.get(2).getKey());
-		assertEqual(3, entries.get(3).getKey());
-		assertEqual(4, entries.get(4).getKey());
-		assertEqual(5, leakEntry.get().getKey());
+		assertEquals(5, entries.size());
+		assertEquals(0, entries.get(0).getKey());
+		assertEquals(1, entries.get(1).getKey());
+		assertEquals(2, entries.get(2).getKey());
+		assertEquals(3, entries.get(3).getKey());
+		assertEquals(4, entries.get(4).getKey());
+		assertEquals(5, leakEntry.get().getKey());
 	}
 
 	private static void testDescSmallest(EntriesList<Integer, Integer> entries) {
 		var leakEntry =  new AtomicReference<Entry<Integer, Set<Integer>>>();
-		assertEqual(0, entries.size());
-		assertEqual(null, entries.get(0));
+		assertEquals(0, entries.size());
+		assertEquals(null, entries.get(0));
 
 		entries.add(new SimpleEntry<>(1, Set.of(1)), leakEntry);
 		entries.add(new SimpleEntry<>(2, Set.of(2)), leakEntry);
@@ -154,33 +154,33 @@ public class EntriesTest extends Test {
 		entries.add(new SimpleEntry<>(4, Set.of(4)), leakEntry);
 		entries.add(new SimpleEntry<>(5, Set.of(5)), leakEntry);
 
-		assertEqual(5, entries.size());
-		assertEqual(5, entries.get(0).getKey());
-		assertEqual(4, entries.get(1).getKey());
-		assertEqual(3, entries.get(2).getKey());
+		assertEquals(5, entries.size());
+		assertEquals(5, entries.get(0).getKey());
+		assertEquals(4, entries.get(1).getKey());
+		assertEquals(3, entries.get(2).getKey());
 
-		assertEqual(2, entries.get(3).getKey());
-		assertEqual(1, entries.get(4).getKey());
-		assertEqual(null, leakEntry.get());
+		assertEquals(2, entries.get(3).getKey());
+		assertEquals(1, entries.get(4).getKey());
+		assertEquals(null, leakEntry.get());
 
 		entries.add(new SimpleEntry<>(0, Set.of(0)), leakEntry);
 
-		assertEqual(5, entries.size());
-		assertEqual(5, entries.get(0).getKey());
-		assertEqual(4, entries.get(1).getKey());
-		assertEqual(3, entries.get(2).getKey());
-		assertEqual(2, entries.get(3).getKey());
-		assertEqual(1, entries.get(4).getKey());
-		assertEqual(0, leakEntry.get().getKey());
+		assertEquals(5, entries.size());
+		assertEquals(5, entries.get(0).getKey());
+		assertEquals(4, entries.get(1).getKey());
+		assertEquals(3, entries.get(2).getKey());
+		assertEquals(2, entries.get(3).getKey());
+		assertEquals(1, entries.get(4).getKey());
+		assertEquals(0, leakEntry.get().getKey());
 
 		entries.add(new SimpleEntry<>(6, Set.of(6)), leakEntry);
 
-		assertEqual(5, entries.size());
-		assertEqual(6, entries.get(0).getKey());
-		assertEqual(5, entries.get(1).getKey());
-		assertEqual(4, entries.get(2).getKey());
-		assertEqual(3, entries.get(3).getKey());
-		assertEqual(2, entries.get(4).getKey());
-		assertEqual(1, leakEntry.get().getKey());
+		assertEquals(5, entries.size());
+		assertEquals(6, entries.get(0).getKey());
+		assertEquals(5, entries.get(1).getKey());
+		assertEquals(4, entries.get(2).getKey());
+		assertEquals(3, entries.get(3).getKey());
+		assertEquals(2, entries.get(4).getKey());
+		assertEquals(1, leakEntry.get().getKey());
 	}
 }

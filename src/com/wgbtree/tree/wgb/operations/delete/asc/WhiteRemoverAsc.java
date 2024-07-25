@@ -76,10 +76,6 @@ public final class WhiteRemoverAsc {
 			int keyHash = key.hashCode();
 			var result = GreyRemoverAsc.remove(greys[i], key, keyHash);
 			greys[i] = (Grey<K, T>) result.getNode();
-
-			if (result.getEntry() == null) {
-				throw new IllegalStateException("Entry not found in the grey node");
-			}
 			removedEntry = result.getEntry();
 		}
 

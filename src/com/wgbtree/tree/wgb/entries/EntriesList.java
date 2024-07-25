@@ -30,7 +30,8 @@ public abstract class EntriesList<K extends Comparable<K>, T> implements List<En
 		return size > 0 ? array[size - 1] : null;
 	}
 
-	public abstract EntriesList<K, T> setPolicy(LeakPolicy leakPolicy);
+	public abstract LeakPolicy getPolicy();
+	public abstract EntriesList<K, T> convert(LeakPolicy leakPolicy);
 	public abstract boolean add(@NonNull Entry<K, Set<T>> entry, AtomicReference<Entry<K, Set<T>>> leakedEntry);
 	public abstract int search(K key);
 

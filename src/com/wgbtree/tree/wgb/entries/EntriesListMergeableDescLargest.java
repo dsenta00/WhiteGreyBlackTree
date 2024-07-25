@@ -6,6 +6,9 @@ import com.wgbtree.tree.wgb.handler.EntrySearcher;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.wgbtree.tree.wgb.constants.LeakPolicy.LARGEST;
+import static com.wgbtree.tree.wgb.constants.LeakPolicy.SMALLEST;
+
 public class EntriesListMergeableDescLargest<K extends Comparable<K>, T> extends EntriesList<K, T> {
 
 	public EntriesListMergeableDescLargest(int capacityLimit) {
@@ -17,17 +20,18 @@ public class EntriesListMergeableDescLargest<K extends Comparable<K>, T> extends
 	}
 
 	@Override
-	public EntriesList<K, T> setPolicy(LeakPolicy leakPolicy) {
-		return leakPolicy == LeakPolicy.SMALLEST ? new EntriesListMergeableDescSmallest<>(this) : this;
+	public LeakPolicy getPolicy() {
+		return LARGEST;
+	}
+
+	@Override
+	public EntriesList<K, T> convert(LeakPolicy leakPolicy) {
+		return leakPolicy == SMALLEST ? new EntriesListMergeableDescSmallest<>(this) : this;
 	}
 
 	public boolean add(Map.Entry<K, Set<T>> entry, AtomicReference<Map.Entry<K, Set<T>>> leakedEntry) {
 		// Reset leaked entry
 		leakedEntry.set(null);
-
-		if (entry == null) {
-			throw new NullPointerException();
-		}
 
 		Optional<Map.Entry<K, Set<T>>> existingEntryOptional = find(entry.getKey());
 		if (existingEntryOptional.isPresent()) {

@@ -10,21 +10,21 @@ public class RankCalculatorTest extends Test {
 	}
 
 	public static void testGreatestRank() {
-		assertEqual(2, RankCalculator.calculateGreatestRank(1, 1));
-		assertEqual(2, RankCalculator.calculateGreatestRank(1, 14));
-		assertEqual(2, RankCalculator.calculateGreatestRank(1, 15));
-		assertEqual(3, RankCalculator.calculateGreatestRank(1, 16));
-		assertEqual(3, RankCalculator.calculateGreatestRank(1, 87));
-		assertEqual(5, RankCalculator.calculateGreatestRank(1, 88));
-		assertEqual(5, RankCalculator.calculateGreatestRank(1, 807));
-		assertEqual(7, RankCalculator.calculateGreatestRank(1, 808));
-		assertEqual(7, RankCalculator.calculateGreatestRank(1, 10887));
+		assertEquals(2, RankCalculator.calculateGreatestRank(1, 1));
+		assertEquals(2, RankCalculator.calculateGreatestRank(1, 14));
+		assertEquals(2, RankCalculator.calculateGreatestRank(1, 15));
+		assertEquals(3, RankCalculator.calculateGreatestRank(1, 16));
+		assertEquals(3, RankCalculator.calculateGreatestRank(1, 87));
+		assertEquals(5, RankCalculator.calculateGreatestRank(1, 88));
+		assertEquals(5, RankCalculator.calculateGreatestRank(1, 807));
+		assertEquals(7, RankCalculator.calculateGreatestRank(1, 808));
+		assertEquals(7, RankCalculator.calculateGreatestRank(1, 10887));
 	}
 
 	public static void testGreatestCapacity() {
-		assertEqual(15, RankCalculator.calculateGreatestCapacity(1, 2));
-		assertEqual(87, RankCalculator.calculateGreatestCapacity(1, 3));
-		assertEqual(807, RankCalculator.calculateGreatestCapacity(1, 5));
-		assertEqual(10887, RankCalculator.calculateGreatestCapacity(1, 7));
+		assertEquals(15, RankCalculator.calculateGreatestCapacity(1, 2));
+		assertEquals(87, RankCalculator.calculateGreatestCapacity(1, 3));
+		assertEquals(807, RankCalculator.calculateGreatestCapacity(1, 5));
+		assertEquals(10887, RankCalculator.calculateGreatestCapacity(1, 7));
 	}
 }

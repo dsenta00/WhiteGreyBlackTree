@@ -122,11 +122,6 @@ public final class BlackRemoverAsc {
 		int keyHash = key.hashCode();
 		var result = GreyRemoverAsc.remove(greys[i], key, keyHash);
 		greys[i] = (Grey<K, T>) result.getNode();
-
-		if (result.getEntry() == null) {
-			GreyRemoverAsc.remove(greys[i], key, keyHash);
-		}
-
 		black.getEntries().add(result.getEntry());
 	}
 }

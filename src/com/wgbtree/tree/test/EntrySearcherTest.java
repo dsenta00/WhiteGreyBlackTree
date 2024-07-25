@@ -26,7 +26,7 @@ class EntrySearcherTest extends Test {
 
 		int index = EntrySearcher.searchAsc(array, 5, 5);
 
-		assertEqual(4, index);
+		assertEquals(4, index);
 	}
 
 	static void testSearchDesc() {
@@ -40,7 +40,7 @@ class EntrySearcherTest extends Test {
 
 		int index = EntrySearcher.searchDesc(array, 1, 5);
 
-		assertEqual(4, index);
+		assertEquals(4, index);
 	}
 
 	static void testBinarySearchAsc() {
@@ -54,7 +54,7 @@ class EntrySearcherTest extends Test {
 
 		int index = EntrySearcher.binarySearchAsc(array, 5, 5);
 
-		assertEqual(4, index);
+		assertEquals(4, index);
 	}
 
 	static void testBinarySearchDesc() {
@@ -68,6 +68,6 @@ class EntrySearcherTest extends Test {
 
 		int index = EntrySearcher.binarySearchDesc(array, 1, 5);
 
-		assertEqual(4, index);
+		assertEquals(4, index);
 	}
 }
