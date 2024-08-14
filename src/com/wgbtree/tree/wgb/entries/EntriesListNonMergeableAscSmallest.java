@@ -13,6 +13,7 @@ import static com.wgbtree.tree.wgb.constants.LeakPolicy.LARGEST;
 import static com.wgbtree.tree.wgb.constants.LeakPolicy.SMALLEST;
 
 public class EntriesListNonMergeableAscSmallest<K extends Comparable<K>, T> extends EntriesList<K, T> {
+
 	public EntriesListNonMergeableAscSmallest(int capacityLimit) {
 		super(capacityLimit);
 	}
@@ -34,10 +35,6 @@ public class EntriesListNonMergeableAscSmallest<K extends Comparable<K>, T> exte
 	public boolean add(Entry<K, Set<T>> entry, AtomicReference<Entry<K, Set<T>>> leakedEntry) {
 		// Reset leaked entry
 		leakedEntry.set(null);
-
-		if (entry == null) {
-			throw new NullPointerException();
-		}
 
 		Optional<Entry<K, Set<T>>> existingEntryOptional = find(entry.getKey());
 		if (existingEntryOptional.isPresent()) {

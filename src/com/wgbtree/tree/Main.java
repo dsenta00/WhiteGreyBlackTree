@@ -1,34 +1,56 @@
 package com.wgbtree.tree;
 
+import com.amazonaws.client.builder.AwsClientBuilder;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.document.DynamoDB;
+import com.amazonaws.services.dynamodbv2.document.Table;
+import com.amazonaws.services.dynamodbv2.model.*;
 import com.wgbtree.tree.bplus.BPlusTreeMap;
 import com.wgbtree.tree.redblack.TreeMapAsTree;
 import com.wgbtree.tree.wgb.AccWGBTreeMap;
-import com.wgbtree.tree.wgb.DecWGBTreeMap;
-import com.wgbtree.tree.wgb.StraightWGBTreeMap;
+import com.wgbtree.tree.wgb.MersenneAccWgbTreeMap;
+import com.wgbtree.tree.wgb.MersenneDecWgbTreeMap;
+import com.wgbtree.tree.wgb.WGBPowerTreeMap;
 
-import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class Main {
 
 	private static final Map<String, Map<String, StringBuilder>> buffers = new HashMap<>();
+	private static final Map<String, BatchWriteItemRequest> batchWriteItemRequests = new HashMap<>();
 	private static final int MIN_BUFFER_SIZE_LIMIT = 10_000;
 	private static final int MAX_BUFFER_SIZE_LIMIT = 100_000;
 	private static int bufferLimit = MIN_BUFFER_SIZE_LIMIT;
-	private static final int MAX_REPEAT = 5;
-	private static final int MIN_TOTAL_COUNT = 2000;
-	private static final int MAX_TOTAL_COUNT = 8_000_000;
+	private static final int MAX_REPEAT = 6;
+	private static final int MIN_TOTAL_COUNT = 128_000;
+	private static final int MAX_TOTAL_COUNT = 4_196_000;
+
+	private static final AmazonDynamoDB dynamoDbClient = AmazonDynamoDBClient.builder()
+			.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration("http://localhost:8001", "us-east-2"))
+			.build();
+
+	private static final DynamoDB dynamoDb = new DynamoDB(dynamoDbClient);
 
 	public static void flushBuffer() {
 		buffers.forEach((operation, map) -> map.forEach((treeName, buffer) -> flushBuffer(operation, treeName, buffer)));
 	}
 
-	public static void writeToCsvFile(String operation, int count, String treeName, long metric) {
+	public static void writeToTable(String operation, int count, String treeName, long metric) {
+		GetItemRequest getItemRequest = new GetItemRequest()
+				.withTableName(operation)
+				.withKey(Map.of("tree_name", new AttributeValue(treeName), "count", new AttributeValue().withN(String.valueOf(count))));
+
+		if (dynamoDbClient.getItem(getItemRequest).getItem() != null) {
+			var updateItemRequest = new UpdateItemRequest()
+					.withTableName(operation)
+					.withKey(Map.of("tree_name", new AttributeValue(treeName), "count", new AttributeValue().withN(String.valueOf(count))))
+					.withUpdateExpression("set #m = :m")
+					.withExpressionAttributeNames(Map.of("#m", "metric"))
+					.withExpressionAttributeValues(Map.of(":m", new AttributeValue().withN(String.valueOf(metric)));
+		}
+		batchWriteItemRequests.put(operation, new BatchWriteItemRequest())
 		var buffer = buffers.computeIfAbsent(operation, k -> new HashMap<>())
 				.computeIfAbsent(treeName, k -> new StringBuilder())
 				.append(count)
@@ -51,26 +73,61 @@ public class Main {
 		}
 	}
 
-	public static void createCsvFilesForTree(String treeName) {
-		createCsvFileIfDoesNotExist("insert", treeName);
-		createCsvFileIfDoesNotExist("search", treeName);
-		createCsvFileIfDoesNotExist("searchMin", treeName);
-		createCsvFileIfDoesNotExist("searchMax", treeName);
-		createCsvFileIfDoesNotExist("depth", treeName);
+	public static void createTables() {
+		createTableIfDoesNotExist("insert");
+		createTableIfDoesNotExist("search");
+		createTableIfDoesNotExist("searchMin");
+		createTableIfDoesNotExist("searchMax");
+		createTableIfDoesNotExist("depth");
 	}
 
-	public static void createCsvFileIfDoesNotExist(String operation, String treeName) {
-		String filename = operation + "_" + treeName + ".csv";
-		if (!new File(filename).exists())
-			try (var writer = new FileWriter(filename)) {
-				writer.write("count,metric\n");
-			} catch (IOException e) {
-				System.out.println("Error writing to file: " + e.getMessage());
-			}
+	public static void createTableIfDoesNotExist(String operation) {
+		if (!doesTableExist(operation)) {
+			createTable(operation);
+		}
+	}
+
+	private static boolean doesTableExist(String tableName) {
+		try {
+			var response = dynamoDbClient.describeTable(tableName);
+			return Objects.equals(response.getTable().getTableStatus(), "ACTIVE");
+		} catch (ResourceNotFoundException e) {
+			// Table does not exist
+			return false;
+		}
+	}
+
+	private static void createTable(String tableName) {
+
+		try {
+			ArrayList<KeySchemaElement> keySchema = new ArrayList<>();
+			ArrayList<AttributeDefinition> attributeDefinitions = new ArrayList<>();
+
+			keySchema.add(new KeySchemaElement().withAttributeName("tree_name").withKeyType(KeyType.HASH)); // Partition
+			attributeDefinitions.add(new AttributeDefinition().withAttributeName("tree_name").withAttributeType("S"));
+
+			keySchema.add(new KeySchemaElement().withAttributeName("count").withKeyType(KeyType.RANGE)); // Sort
+			attributeDefinitions.add(new AttributeDefinition().withAttributeName("count").withAttributeType("N"));
+
+			CreateTableRequest request = new CreateTableRequest().withTableName(tableName).withKeySchema(keySchema)
+					.withProvisionedThroughput(new ProvisionedThroughput().withReadCapacityUnits(10L)
+							.withWriteCapacityUnits(5L));
+
+			request.setAttributeDefinitions(attributeDefinitions);
+
+			System.out.println("Issuing CreateTable request for " + tableName);
+			Table table = dynamoDb.createTable(request);
+			System.out.println("Waiting for " + tableName + " to be created...this may take a while...");
+			table.waitForActive();
+		} catch (Exception e) {
+			System.err.println("CreateTable request failed for " + tableName);
+			System.err.println(e.getMessage());
+		}
 	}
 
 	public static void createCsvFiles(List<AsTree<String, Boolean>> trees) {
-		trees.forEach(tree -> createCsvFilesForTree(tree.getName()));
+		c
+		trees.forEach(tree -> createTables(tree.getName()));
 	}
 
 	public static void main(String[] args) {
@@ -79,203 +136,171 @@ public class Main {
 			System.out.println("Shutdown hook triggered.");
 		}));
 
-		var trees = List.of(
-				new TreeMapAsTree<String, Boolean>(),
+		List<AsTree<String, Boolean>> trees = List.of(
+				new AccWGBTreeMap<>(100, 97, false),
+				new AccWGBTreeMap<>(150, 97, false),
+				new AccWGBTreeMap<>(200, 97, false),
+				new AccWGBTreeMap<>(300, 97, false),
+				new AccWGBTreeMap<>(600, 97, false),
 
-				new BPlusTreeMap<String, Boolean>(3),
-				new BPlusTreeMap<String, Boolean>(20),
-				new BPlusTreeMap<String, Boolean>(50),
-				new BPlusTreeMap<String, Boolean>(100),
-				new BPlusTreeMap<String, Boolean>(150),
-				new BPlusTreeMap<String, Boolean>(200),
+				new AccWGBTreeMap<>(100, 199, false),
+				new AccWGBTreeMap<>(150, 199, false),
+				new AccWGBTreeMap<>(200, 199, false),
+				new AccWGBTreeMap<>(300, 199, false),
+				new AccWGBTreeMap<>(600, 199, false),
 
-				new StraightWGBTreeMap<String, Boolean>(),
+				new AccWGBTreeMap<>(100, 307, false),
+				new AccWGBTreeMap<>(150, 307, false),
+				new AccWGBTreeMap<>(200, 307, false),
+				new AccWGBTreeMap<>(300, 307, false),
+				new AccWGBTreeMap<>(600, 307, false),
 
-				new StraightWGBTreeMap<String, Boolean>(3, false, false),
-				new StraightWGBTreeMap<String, Boolean>(3, false, true),
-				new StraightWGBTreeMap<String, Boolean>(3, true, false),
-				new StraightWGBTreeMap<String, Boolean>(3, true, true),
-				new StraightWGBTreeMap<String, Boolean>(20, false, false),
-				new StraightWGBTreeMap<String, Boolean>(20, false, true),
-				new StraightWGBTreeMap<String, Boolean>(20, true, false),
-				new StraightWGBTreeMap<String, Boolean>(20, true, true),
-				new StraightWGBTreeMap<String, Boolean>(50, false, false),
-				new StraightWGBTreeMap<String, Boolean>(50, false, true),
-				new StraightWGBTreeMap<String, Boolean>(50, true, false),
-				new StraightWGBTreeMap<String, Boolean>(50, true, true),
-				new StraightWGBTreeMap<String, Boolean>(100, false, false),
-				new StraightWGBTreeMap<String, Boolean>(100, false, true),
-				new StraightWGBTreeMap<String, Boolean>(100, true, false),
-				new StraightWGBTreeMap<String, Boolean>(100, true, true),
-				new StraightWGBTreeMap<String, Boolean>(150, false, false),
-				new StraightWGBTreeMap<String, Boolean>(150, false, true),
-				new StraightWGBTreeMap<String, Boolean>(150, true, false),
-				new StraightWGBTreeMap<String, Boolean>(150, true, true),
-				new StraightWGBTreeMap<String, Boolean>(200, false, false),
-				new StraightWGBTreeMap<String, Boolean>(200, false, true),
-				new StraightWGBTreeMap<String, Boolean>(200, true, false),
-				new StraightWGBTreeMap<String, Boolean>(200, true, true),
+				new AccWGBTreeMap<>(100, 8191, false),
+				new AccWGBTreeMap<>(150, 8191, false),
+				new AccWGBTreeMap<>(200, 8191, false),
+				new AccWGBTreeMap<>(300, 8191, false),
+				new AccWGBTreeMap<>(600, 8191, false),
 
-				new AccWGBTreeMap<String, Boolean>(),
+				new MersenneAccWgbTreeMap<>(100, 2, false),
+				new MersenneAccWgbTreeMap<>(150, 2, false),
+				new MersenneAccWgbTreeMap<>(200, 2, false),
+				new MersenneAccWgbTreeMap<>(300, 2, false),
+				new MersenneAccWgbTreeMap<>(600, 2, false),
 
-				new AccWGBTreeMap<String, Boolean>(3, 2, false, false),
-				new AccWGBTreeMap<String, Boolean>(3, 2, false, true),
-				new AccWGBTreeMap<String, Boolean>(3, 2, true, false),
-				new AccWGBTreeMap<String, Boolean>(3, 2, true, true),
-				new AccWGBTreeMap<String, Boolean>(20, 2, false, false),
-				new AccWGBTreeMap<String, Boolean>(20, 2, false, true),
-				new AccWGBTreeMap<String, Boolean>(20, 2, true, false),
-				new AccWGBTreeMap<String, Boolean>(20, 2, true, true),
-				new AccWGBTreeMap<String, Boolean>(50, 2, false, false),
-				new AccWGBTreeMap<String, Boolean>(50, 2, false, true),
-				new AccWGBTreeMap<String, Boolean>(50, 2, true, false),
-				new AccWGBTreeMap<String, Boolean>(50, 2, true, true),
-				new AccWGBTreeMap<String, Boolean>(100, 2, false, false),
-				new AccWGBTreeMap<String, Boolean>(100, 2, false, true),
-				new AccWGBTreeMap<String, Boolean>(100, 2, true, false),
-				new AccWGBTreeMap<String, Boolean>(100, 2, true, true),
-				new AccWGBTreeMap<String, Boolean>(150, 2, false, false),
-				new AccWGBTreeMap<String, Boolean>(150, 2, false, true),
-				new AccWGBTreeMap<String, Boolean>(150, 2, true, false),
-				new AccWGBTreeMap<String, Boolean>(150, 2, true, true),
-				new AccWGBTreeMap<String, Boolean>(200, 2, false, false),
-				new AccWGBTreeMap<String, Boolean>(200, 2, false, true),
-				new AccWGBTreeMap<String, Boolean>(200, 2, true, false),
-				new AccWGBTreeMap<String, Boolean>(200, 2, true, true),
+				new MersenneAccWgbTreeMap<>(100, 3, false),
+				new MersenneAccWgbTreeMap<>(150, 3, false),
+				new MersenneAccWgbTreeMap<>(200, 3, false),
+				new MersenneAccWgbTreeMap<>(300, 3, false),
+				new MersenneAccWgbTreeMap<>(600, 3, false),
 
-				new AccWGBTreeMap<String, Boolean>(3, 3, false, false),
-				new AccWGBTreeMap<String, Boolean>(3, 3, false, true),
-				new AccWGBTreeMap<String, Boolean>(3, 3, true, false),
-				new AccWGBTreeMap<String, Boolean>(3, 3, true, true),
-				new AccWGBTreeMap<String, Boolean>(20, 3, false, false),
-				new AccWGBTreeMap<String, Boolean>(20, 3, false, true),
-				new AccWGBTreeMap<String, Boolean>(20, 3, true, false),
-				new AccWGBTreeMap<String, Boolean>(20, 3, true, true),
-				new AccWGBTreeMap<String, Boolean>(50, 3, false, false),
-				new AccWGBTreeMap<String, Boolean>(50, 3, false, true),
-				new AccWGBTreeMap<String, Boolean>(50, 3, true, false),
-				new AccWGBTreeMap<String, Boolean>(50, 3, true, true),
-				new AccWGBTreeMap<String, Boolean>(100, 3, false, false),
-				new AccWGBTreeMap<String, Boolean>(100, 3, false, true),
-				new AccWGBTreeMap<String, Boolean>(100, 3, true, false),
-				new AccWGBTreeMap<String, Boolean>(100, 3, true, true),
-				new AccWGBTreeMap<String, Boolean>(150, 3, false, false),
-				new AccWGBTreeMap<String, Boolean>(150, 3, false, true),
-				new AccWGBTreeMap<String, Boolean>(150, 3, true, false),
-				new AccWGBTreeMap<String, Boolean>(150, 3, true, true),
-				new AccWGBTreeMap<String, Boolean>(200, 3, false, false),
-				new AccWGBTreeMap<String, Boolean>(200, 3, false, true),
-				new AccWGBTreeMap<String, Boolean>(200, 3, true, false),
-				new AccWGBTreeMap<String, Boolean>(200, 3, true, true),
+				new MersenneAccWgbTreeMap<>(100, 5, false),
+				new MersenneAccWgbTreeMap<>(150, 5, false),
+				new MersenneAccWgbTreeMap<>(200, 5, false),
+				new MersenneAccWgbTreeMap<>(300, 5, false),
+				new MersenneAccWgbTreeMap<>(600, 5, false),
 
-				new AccWGBTreeMap<String, Boolean>(3, 5, false, false),
-				new AccWGBTreeMap<String, Boolean>(3, 5, false, true),
-				new AccWGBTreeMap<String, Boolean>(3, 5, true, false),
-				new AccWGBTreeMap<String, Boolean>(3, 5, true, true),
-				new AccWGBTreeMap<String, Boolean>(20, 5, false, false),
-				new AccWGBTreeMap<String, Boolean>(20, 5, false, true),
-				new AccWGBTreeMap<String, Boolean>(20, 5, true, false),
-				new AccWGBTreeMap<String, Boolean>(20, 5, true, true),
-				new AccWGBTreeMap<String, Boolean>(50, 5, false, false),
-				new AccWGBTreeMap<String, Boolean>(50, 5, false, true),
-				new AccWGBTreeMap<String, Boolean>(50, 5, true, false),
-				new AccWGBTreeMap<String, Boolean>(50, 5, true, true),
-				new AccWGBTreeMap<String, Boolean>(100, 5, false, false),
-				new AccWGBTreeMap<String, Boolean>(100, 5, false, true),
-				new AccWGBTreeMap<String, Boolean>(100, 5, true, false),
-				new AccWGBTreeMap<String, Boolean>(100, 5, true, true),
-				new AccWGBTreeMap<String, Boolean>(150, 5, false, false),
-				new AccWGBTreeMap<String, Boolean>(150, 5, false, true),
-				new AccWGBTreeMap<String, Boolean>(150, 5, true, false),
-				new AccWGBTreeMap<String, Boolean>(150, 5, true, true),
-				new AccWGBTreeMap<String, Boolean>(200, 5, false, false),
-				new AccWGBTreeMap<String, Boolean>(200, 5, false, true),
-				new AccWGBTreeMap<String, Boolean>(200, 5, true, false),
-				new AccWGBTreeMap<String, Boolean>(200, 5, true, true),
+				new MersenneAccWgbTreeMap<>(100, 7, false),
+				new MersenneAccWgbTreeMap<>(150, 7, false),
+				new MersenneAccWgbTreeMap<>(200, 7, false),
+				new MersenneAccWgbTreeMap<>(300, 7, false),
+				new MersenneAccWgbTreeMap<>(600, 7, false),
 
-				new AccWGBTreeMap<String, Boolean>(3, 7, false, false),
-				new AccWGBTreeMap<String, Boolean>(3, 7, false, true),
-				new AccWGBTreeMap<String, Boolean>(3, 7, true, false),
-				new AccWGBTreeMap<String, Boolean>(3, 7, true, true),
-				new AccWGBTreeMap<String, Boolean>(20, 7, false, false),
-				new AccWGBTreeMap<String, Boolean>(20, 7, false, true),
-				new AccWGBTreeMap<String, Boolean>(20, 7, true, false),
-				new AccWGBTreeMap<String, Boolean>(20, 7, true, true),
-				new AccWGBTreeMap<String, Boolean>(50, 7, false, false),
-				new AccWGBTreeMap<String, Boolean>(50, 7, false, true),
-				new AccWGBTreeMap<String, Boolean>(50, 7, true, false),
-				new AccWGBTreeMap<String, Boolean>(50, 7, true, true),
-				new AccWGBTreeMap<String, Boolean>(100, 7, false, false),
-				new AccWGBTreeMap<String, Boolean>(100, 7, false, true),
-				new AccWGBTreeMap<String, Boolean>(100, 7, true, false),
-				new AccWGBTreeMap<String, Boolean>(100, 7, true, true),
-				new AccWGBTreeMap<String, Boolean>(150, 7, false, false),
-				new AccWGBTreeMap<String, Boolean>(150, 7, false, true),
-				new AccWGBTreeMap<String, Boolean>(150, 7, true, false),
-				new AccWGBTreeMap<String, Boolean>(150, 7, true, true),
-				new AccWGBTreeMap<String, Boolean>(200, 7, false, false),
-				new AccWGBTreeMap<String, Boolean>(200, 7, false, true),
-				new AccWGBTreeMap<String, Boolean>(200, 7, true, false),
-				new AccWGBTreeMap<String, Boolean>(200, 7, true, true),
+				new MersenneAccWgbTreeMap<>(100, 13, false),
+				new MersenneAccWgbTreeMap<>(150, 13, false),
+				new MersenneAccWgbTreeMap<>(200, 13, false),
+				new MersenneAccWgbTreeMap<>(300, 13, false),
+				new MersenneAccWgbTreeMap<>(600, 13, false),
 
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT),
+				new MersenneDecWgbTreeMap<>(100, 13, false),
+				new MersenneDecWgbTreeMap<>(150, 13, false),
+				new MersenneDecWgbTreeMap<>(200, 13, false),
+				new MersenneDecWgbTreeMap<>(300, 13, false),
+				new MersenneDecWgbTreeMap<>(600, 13, false),
 
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 3, false, false),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 3, false, true),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 3, true, false),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 3, true, true),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 20, false, false),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 20, false, true),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 20, true, false),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 20, true, true),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 50, false, false),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 50, false, true),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 50, true, false),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 50, true, true),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 100, false, false),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 100, false, true),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 100, true, false),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 100, true, true),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 150, false, false),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 150, false, true),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 150, true, false),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 150, true, true),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 200, false, false),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 200, false, true),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 200, true, false),
-				new DecWGBTreeMap<String, Boolean>(MIN_TOTAL_COUNT, 200, true, true),
+				new MersenneDecWgbTreeMap<>(100, 7, false),
+				new MersenneDecWgbTreeMap<>(150, 7, false),
+				new MersenneDecWgbTreeMap<>(200, 7, false),
+				new MersenneDecWgbTreeMap<>(300, 7, false),
+				new MersenneDecWgbTreeMap<>(600, 7, false),
 
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 3, false, false),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 3, false, true),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 3, true, false),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 3, true, true),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 20, false, false),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 20, false, true),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 20, true, false),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 20, true, true),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 50, false, false),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 50, false, true),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 50, true, false),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 50, true, true),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 100, false, false),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 100, false, true),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 100, true, false),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 100, true, true),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 150, false, false),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 150, false, true),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 150, true, false),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 150, true, true),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 200, false, false),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 200, false, true),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 200, true, false),
-				new DecWGBTreeMap<String, Boolean>(MAX_TOTAL_COUNT, 200, true, true)
+				new MersenneDecWgbTreeMap<>(100, 5, false),
+				new MersenneDecWgbTreeMap<>(150, 5, false),
+				new MersenneDecWgbTreeMap<>(200, 5, false),
+				new MersenneDecWgbTreeMap<>(300, 5, false),
+				new MersenneDecWgbTreeMap<>(600, 5, false),
+
+				new MersenneDecWgbTreeMap<>(100, 3, false),
+				new MersenneDecWgbTreeMap<>(150, 3, false),
+				new MersenneDecWgbTreeMap<>(200, 3, false),
+				new MersenneDecWgbTreeMap<>(300, 3, false),
+				new MersenneDecWgbTreeMap<>(600, 3, false),
+
+				new MersenneDecWgbTreeMap<>(100, 2, false),
+				new MersenneDecWgbTreeMap<>(150, 2, false),
+				new MersenneDecWgbTreeMap<>(200, 2, false),
+				new MersenneDecWgbTreeMap<>(300, 2, false),
+				new MersenneDecWgbTreeMap<>(600, 2, false),
+
+				new WGBPowerTreeMap<>(100, 2, false),
+				new WGBPowerTreeMap<>(150, 2, false),
+				new WGBPowerTreeMap<>(200, 2, false),
+				new WGBPowerTreeMap<>(300, 2, false),
+				new WGBPowerTreeMap<>(600, 2, false),
+
+				new WGBPowerTreeMap<>(100, 3, false),
+				new WGBPowerTreeMap<>(150, 3, false),
+				new WGBPowerTreeMap<>(200, 3, false),
+				new WGBPowerTreeMap<>(300, 3, false),
+				new WGBPowerTreeMap<>(600, 3, false),
+
+				new WGBPowerTreeMap<>(100, 5, false),
+				new WGBPowerTreeMap<>(150, 5, false),
+				new WGBPowerTreeMap<>(200, 5, false),
+				new WGBPowerTreeMap<>(300, 5, false),
+				new WGBPowerTreeMap<>(600, 5, false),
+
+				new WGBPowerTreeMap<>(100, 4, false),
+				new WGBPowerTreeMap<>(150, 4, false),
+				new WGBPowerTreeMap<>(200, 4, false),
+				new WGBPowerTreeMap<>(300, 4, false),
+				new WGBPowerTreeMap<>(600, 4, false),
+
+				new WGBPowerTreeMap<>(100, 6, false),
+				new WGBPowerTreeMap<>(150, 6, false),
+				new WGBPowerTreeMap<>(200, 6, false),
+				new WGBPowerTreeMap<>(300, 6, false),
+				new WGBPowerTreeMap<>(600, 6, false),
+
+				new WGBPowerTreeMap<>(100, 7, false),
+				new WGBPowerTreeMap<>(150, 7, false),
+				new WGBPowerTreeMap<>(200, 7, false),
+				new WGBPowerTreeMap<>(300, 7, false),
+				new WGBPowerTreeMap<>(600, 7, false),
+
+				new WGBPowerTreeMap<>(100, 8, false),
+				new WGBPowerTreeMap<>(150, 8, false),
+				new WGBPowerTreeMap<>(200, 8, false),
+				new WGBPowerTreeMap<>(300, 8, false),
+				new WGBPowerTreeMap<>(600, 8, false),
+
+				new WGBPowerTreeMap<>(100, 9, false),
+				new WGBPowerTreeMap<>(150, 9, false),
+				new WGBPowerTreeMap<>(200, 9, false),
+				new WGBPowerTreeMap<>(300, 9, false),
+				new WGBPowerTreeMap<>(600, 9, false),
+
+				new WGBPowerTreeMap<>(100, 10, false),
+				new WGBPowerTreeMap<>(150, 10, false),
+				new WGBPowerTreeMap<>(200, 10, false),
+				new WGBPowerTreeMap<>(300, 10, false),
+				new WGBPowerTreeMap<>(600, 10, false),
+
+				new TreeMapAsTree<>(),
+
+				new BPlusTreeMap<>(100),
+				new BPlusTreeMap<>(150),
+				new BPlusTreeMap<>(200),
+				new BPlusTreeMap<>(300)
 		);
 
-		createCsvFiles(trees);
+		createTables();
+
+		System.out.println(" > Dry run");
+		trees.forEach(tree -> {
+			for (int count = 1; count < 1000; count++) {
+				String randomString = UUID.randomUUID().toString();
+				tree.put(randomString, true);
+				tree.get(randomString);
+				tree.getMin();
+				tree.getMax();
+				tree.depth();
+			}
+			tree.clear();
+		});
 
 		for (int rep = 1; rep <= MAX_REPEAT; rep++) {
 			int finalRep = rep;
-			int finalTotalCount = (int) Math.min(MIN_TOTAL_COUNT * Math.pow(2, rep-1), MAX_TOTAL_COUNT);
+			int finalTotalCount = (int) Math.min(MIN_TOTAL_COUNT * Math.pow(2, rep - 1), MAX_TOTAL_COUNT);
 
 			trees.forEach(tree -> {
 				for (int count = 1; count < finalTotalCount; count++) {
@@ -287,19 +312,19 @@ public class Main {
 						String randomString = UUID.randomUUID().toString();
 
 						long insertTime = measureTime(() -> tree.put(randomString, true));
-						writeToCsvFile("insert", count, tree.getName(), insertTime);
+						writeToTable("insert", count, tree.getName(), insertTime);
 
 						long searchTime = measureTime(() -> tree.get(randomString));
-						writeToCsvFile("search", count, tree.getName(), searchTime);
+						writeToTable("search", count, tree.getName(), searchTime);
 
 						long searchMinTime = measureTime(tree::getMin);
-						writeToCsvFile("searchMin", count, tree.getName(), searchMinTime);
+						writeToTable("searchMin", count, tree.getName(), searchMinTime);
 
 						long searchMaxTime = measureTime(tree::getMax);
-						writeToCsvFile("searchMax", count, tree.getName(), searchMaxTime);
+						writeToTable("searchMax", count, tree.getName(), searchMaxTime);
 
 						long depth = tree.depth();
-						writeToCsvFile("depth", count, tree.getName(), depth);
+						writeToTable("depth", count, tree.getName(), depth);
 
 						long totalTime = insertTime + searchTime + searchMinTime + searchMaxTime + depth;
 						bufferLimit = totalTime > 1_000_000_000 ? Math.min(bufferLimit * 2, MAX_BUFFER_SIZE_LIMIT) : bufferLimit;

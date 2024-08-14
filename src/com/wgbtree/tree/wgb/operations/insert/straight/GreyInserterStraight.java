@@ -2,7 +2,7 @@ package com.wgbtree.tree.wgb.operations.insert.straight;
 
 import com.wgbtree.tree.wgb.constants.LeakPolicy;
 import com.wgbtree.tree.wgb.creator.GreyCreator;
-import com.wgbtree.tree.wgb.model.node.Grey;
+import com.wgbtree.tree.wgb.model.node.grey.Grey;
 import com.wgbtree.tree.wgb.model.info.TreeConfig;
 import com.wgbtree.tree.wgb.operations.rotate.straight.GreyRotatorStraight;
 import lombok.NoArgsConstructor;

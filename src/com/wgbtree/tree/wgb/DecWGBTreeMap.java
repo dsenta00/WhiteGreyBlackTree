@@ -2,9 +2,9 @@ package com.wgbtree.tree.wgb;
 
 import com.wgbtree.tree.AsTree;
 import com.wgbtree.tree.wgb.creator.TreeConfigCreator;
-import com.wgbtree.tree.wgb.operations.delete.desc.GreyRemoverDesc;
-import com.wgbtree.tree.wgb.operations.get.desc.GreyGetterDesc;
-import com.wgbtree.tree.wgb.operations.insert.desc.GreyInserterDesc;
+import com.wgbtree.tree.wgb.operations.delete.dec.GreyRemoverDec;
+import com.wgbtree.tree.wgb.operations.get.dec.GreyGetterDec;
+import com.wgbtree.tree.wgb.operations.insert.dec.GreyInserterDec;
 import lombok.Getter;
 
 import java.io.Serializable;
@@ -12,6 +12,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.wgbtree.tree.wgb.assertion.AssertionTreeConfig.assertOrder;
+import static com.wgbtree.tree.wgb.assertion.AssertionTreeConfig.assertRank;
+import static com.wgbtree.tree.wgb.calculator.RankCalculator.calculateGreatestCapacity;
 import static com.wgbtree.tree.wgb.calculator.RankCalculator.calculateGreatestRank;
 import static com.wgbtree.tree.wgb.constants.Constants.*;
 import static com.wgbtree.tree.wgb.model.info.GrowthMode.DECELERATING;
@@ -25,7 +27,7 @@ public class DecWGBTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K, T> 
 	public DecWGBTreeMap(int effectiveCapacity) {
 		super(TreeConfigCreator.create(
 				DEFAULT_ORDER,
-				calculateGreatestRank(effectiveCapacity, DEFAULT_ORDER),
+				calculateGreatestRank(DEFAULT_ORDER, effectiveCapacity),
 				DEFAULT_ARE_DUPLICATES_ALLOWED,
 				DECELERATING,
 				DEFAULT_IS_BALANCED
@@ -37,7 +39,7 @@ public class DecWGBTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K, T> 
 	public DecWGBTreeMap(int effectiveCapacity, int order) {
 		super(TreeConfigCreator.create(
 				assertOrder(order),
-				calculateGreatestRank(effectiveCapacity, order),
+				calculateGreatestRank(order, effectiveCapacity),
 				DEFAULT_ARE_DUPLICATES_ALLOWED,
 				DECELERATING,
 				DEFAULT_IS_BALANCED
@@ -46,22 +48,22 @@ public class DecWGBTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K, T> 
 		this.effectiveCapacity = effectiveCapacity;
 	}
 
-	public DecWGBTreeMap(int effectiveCapacity, int order, boolean duplicatesAllowed) {
+	public DecWGBTreeMap(int order, int rank, boolean balanced) {
 		super(TreeConfigCreator.create(
 				assertOrder(order),
-				calculateGreatestRank(effectiveCapacity, order),
-				duplicatesAllowed,
+				assertRank(rank),
+				DEFAULT_ARE_DUPLICATES_ALLOWED,
 				DECELERATING,
-				DEFAULT_IS_BALANCED
+				balanced
 		));
 
-		this.effectiveCapacity = effectiveCapacity;
+		this.effectiveCapacity = calculateGreatestCapacity(order, rank);
 	}
 
 	public DecWGBTreeMap(int effectiveCapacity, int order, boolean duplicatesAllowed, boolean balanced) {
 		super(TreeConfigCreator.create(
 				assertOrder(order),
-				calculateGreatestRank(effectiveCapacity, order),
+				calculateGreatestRank(order, effectiveCapacity),
 				duplicatesAllowed,
 				DECELERATING,
 				balanced
@@ -77,24 +79,24 @@ public class DecWGBTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K, T> 
 
 	@Override
 	public K getMin() {
-		var min = GreyGetterDesc.getMin(grey);
+		var min = GreyGetterDec.getMin(grey);
 		return isNull(min) ? null : min.getKey();
 	}
 
 	@Override
 	public K getMax() {
-		var max = GreyGetterDesc.getMax(grey);
+		var max = GreyGetterDec.getMax(grey);
 		return isNull(max) ? null : max.getKey();
 	}
 
 	@Override
 	public List<Set<T>> getAllAsc() {
-		return GreyGetterDesc.getAllAsc(grey);
+		return GreyGetterDec.getAllAsc(grey);
 	}
 
 	@Override
 	public List<Set<T>> getAllDesc() {
-		return GreyGetterDesc.getAllDesc(grey);
+		return GreyGetterDec.getAllDesc(grey);
 	}
 
 	@Override
@@ -105,7 +107,7 @@ public class DecWGBTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K, T> 
 
 		List<K> keysCopy = new LinkedList<>(keys);
 		keysCopy.sort(Comparator.naturalOrder());
-		return GreyGetterDesc.getInAsc(grey, keysCopy);
+		return GreyGetterDec.getInAsc(grey, keysCopy);
 	}
 
 	@Override
@@ -217,14 +219,14 @@ public class DecWGBTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K, T> 
 	@SuppressWarnings("unchecked")
 	public boolean containsKey(Object key) {
 		K k = (K) key;
-		return !GreyGetterDesc.get(grey, k, k.hashCode()).isEmpty();
+		return !GreyGetterDec.get(grey, k, k.hashCode()).isEmpty();
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public T get(Object key) {
 		K k = (K) key;
-		var values = GreyGetterDesc.get(grey, k, k.hashCode());
+		var values = GreyGetterDec.get(grey, k, k.hashCode());
 		if (values.isEmpty()) {
 			return null;
 		}
@@ -238,20 +240,20 @@ public class DecWGBTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K, T> 
 
 
 	public Set<T> getValues(K key) {
-		return GreyGetterDesc.get(grey, key, key.hashCode());
+		return GreyGetterDec.get(grey, key, key.hashCode());
 	}
 
 	@Override
 	public T put(K key, T value) {
 		var oldValue = new AtomicReference<T>();
-		grey = GreyInserterDesc.insert(grey, key, Set.of(value), key.hashCode(), oldValue, config);
+		grey = GreyInserterDec.insert(grey, key, Set.of(value), key.hashCode(), oldValue, config);
 		return oldValue.get();
 	}
 
 	@Override
 	public T remove(Object key) {
 		K k = (K) key;
-		var result = GreyRemoverDesc.remove(grey, k, k.hashCode());
+		var result = GreyRemoverDec.remove(grey, k, k.hashCode());
 
 		var values = result.isEmpty() ? new HashSet<T>() : result.getEntry().getValue();
 		if (values.size() > 1) {

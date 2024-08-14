@@ -3,7 +3,7 @@ package com.wgbtree.tree.wgb.operations.get.straight;
 import com.wgbtree.tree.heap.MaxHeapTree;
 import com.wgbtree.tree.heap.MinHeapTree;
 import com.wgbtree.tree.wgb.comparator.EntryComparator;
-import com.wgbtree.tree.wgb.model.node.Grey;
+import com.wgbtree.tree.wgb.model.node.grey.Grey;
 import com.wgbtree.tree.wgb.model.node.Node;
 import com.wgbtree.tree.wgb.model.result.GreySearchResult;
 import lombok.NoArgsConstructor;

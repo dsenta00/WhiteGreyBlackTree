@@ -226,7 +226,7 @@ public class BPlusTreeMap<K extends Comparable<K>, T> implements AsTree<K, T> {
 
 	@Override
 	public String getName() {
-		return "B+[" + (this.OVERFLOW_BOUND + 1) + "]";
+		return "b+|o:" + (this.OVERFLOW_BOUND + 1);
 	}
 
 	@Override
@@ -239,7 +239,7 @@ public class BPlusTreeMap<K extends Comparable<K>, T> implements AsTree<K, T> {
 		if (node.getClass().equals(BPlusTreeLeafNode.class)) {
 			res.addAll(((BPlusTreeLeafNode) node).data);
 		} else {
-			for (BPlusTreeNode child : ((BPlusTreeNonLeafNode) node).children) {
+			for (var child : ((BPlusTreeNonLeafNode) node).children) {
 				res.addAll(getAllAsc(child));
 			}
 		}

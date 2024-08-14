@@ -1,8 +1,8 @@
 package com.wgbtree.tree.wgb.handler;
 
-import com.wgbtree.tree.wgb.model.node.Black;
-import com.wgbtree.tree.wgb.model.node.Grey;
-import com.wgbtree.tree.wgb.model.node.White;
+import com.wgbtree.tree.wgb.model.node.black.Black;
+import com.wgbtree.tree.wgb.model.node.grey.Grey;
+import com.wgbtree.tree.wgb.model.node.white.White;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 

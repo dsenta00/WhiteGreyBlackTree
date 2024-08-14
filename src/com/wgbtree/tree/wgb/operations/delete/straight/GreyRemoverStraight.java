@@ -1,6 +1,6 @@
 package com.wgbtree.tree.wgb.operations.delete.straight;
 
-import com.wgbtree.tree.wgb.model.node.Grey;
+import com.wgbtree.tree.wgb.model.node.grey.Grey;
 import com.wgbtree.tree.wgb.model.result.RemoveResult;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;

@@ -37,17 +37,17 @@ public class StraightWGBTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K
 		));
 	}
 
-	public StraightWGBTreeMap(int order, boolean duplicatesAllowed) {
+	public StraightWGBTreeMap(int order, boolean balanced) {
 		super(TreeConfigCreator.create(
 				assertOrder(order),
 				DEFAULT_RANK,
-				duplicatesAllowed,
+				DEFAULT_ARE_DUPLICATES_ALLOWED,
 				STRAIGHT,
-				DEFAULT_IS_BALANCED
+				balanced
 		));
 	}
 
-	public StraightWGBTreeMap(int order, boolean duplicatesAllowed, boolean balanced) {
+	public StraightWGBTreeMap(int order, boolean balanced, boolean duplicatesAllowed) {
 		super(TreeConfigCreator.create(
 				assertOrder(order),
 				DEFAULT_RANK,

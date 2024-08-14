@@ -3,7 +3,7 @@ package com.wgbtree.tree.wgb;
 import com.wgbtree.tree.AsTree;
 import com.wgbtree.tree.wgb.handler.GreyHandler;
 import com.wgbtree.tree.wgb.model.info.TreeConfig;
-import com.wgbtree.tree.wgb.model.node.Grey;
+import com.wgbtree.tree.wgb.model.node.grey.Grey;
 import lombok.Getter;
 
 import java.io.Serializable;

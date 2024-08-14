@@ -2,10 +2,9 @@ package com.wgbtree.tree.wgb;
 
 import com.wgbtree.tree.AsTree;
 import com.wgbtree.tree.wgb.creator.TreeConfigCreator;
-import com.wgbtree.tree.wgb.operations.delete.asc.GreyRemoverAsc;
-import com.wgbtree.tree.wgb.operations.get.asc.GreyGetterAsc;
-import com.wgbtree.tree.wgb.operations.get.desc.GreyGetterDesc;
-import com.wgbtree.tree.wgb.operations.insert.asc.GreyInserterAsc;
+import com.wgbtree.tree.wgb.operations.delete.acc.GreyRemoverAcc;
+import com.wgbtree.tree.wgb.operations.get.acc.GreyGetterAcc;
+import com.wgbtree.tree.wgb.operations.insert.acc.GreyInserterAcc;
 import lombok.Getter;
 
 import java.io.Serializable;
@@ -51,17 +50,17 @@ public class AccWGBTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K, T> 
 		));
 	}
 
-	public AccWGBTreeMap(int order, int rank, boolean duplicatesAllowed) {
+	public AccWGBTreeMap(int order, int rank, boolean balanced) {
 		super(TreeConfigCreator.create(
 				assertOrder(order),
 				assertRank(rank),
-				duplicatesAllowed,
+				DEFAULT_ARE_DUPLICATES_ALLOWED,
 				ACCELERATING,
-				DEFAULT_IS_BALANCED
+				balanced
 		));
 	}
 
-	public AccWGBTreeMap(int order, int rank, boolean duplicatesAllowed, boolean balanced) {
+	public AccWGBTreeMap(int order, int rank, boolean balanced, boolean duplicatesAllowed) {
 		super(TreeConfigCreator.create(
 				assertOrder(order),
 				assertRank(rank),
@@ -78,24 +77,24 @@ public class AccWGBTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K, T> 
 
 	@Override
 	public K getMin() {
-		var min = GreyGetterAsc.getMin(grey);
+		var min = GreyGetterAcc.getMin(grey);
 		return isNull(min) ? null : min.getKey();
 	}
 
 	@Override
 	public K getMax() {
-		var max = GreyGetterAsc.getMax(grey);
+		var max = GreyGetterAcc.getMax(grey);
 		return isNull(max) ? null : max.getKey();
 	}
 
 	@Override
 	public List<Set<T>> getAllAsc() {
-		return GreyGetterDesc.getAllAsc(grey);
+		return GreyGetterAcc.getAllAsc(grey);
 	}
 
 	@Override
 	public List<Set<T>> getAllDesc() {
-		return GreyGetterDesc.getAllDesc(grey);
+		return GreyGetterAcc.getAllDesc(grey);
 	}
 
 	@Override
@@ -106,7 +105,7 @@ public class AccWGBTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K, T> 
 
 		List<K> keysCopy = new LinkedList<>(keys);
 		keysCopy.sort(Comparator.naturalOrder());
-		return GreyGetterAsc.getInAsc(grey, keysCopy);
+		return GreyGetterAcc.getInAsc(grey, keysCopy);
 	}
 
 	@Override
@@ -218,14 +217,14 @@ public class AccWGBTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K, T> 
 	@SuppressWarnings("unchecked")
 	public boolean containsKey(Object key) {
 		K k = (K) key;
-		return !GreyGetterAsc.get(grey, k, k.hashCode()).isEmpty();
+		return !GreyGetterAcc.get(grey, k, k.hashCode()).isEmpty();
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public T get(Object key) {
 		K k = (K) key;
-		var values = GreyGetterAsc.get(grey, k, k.hashCode());
+		var values = GreyGetterAcc.get(grey, k, k.hashCode());
 		if (values.isEmpty()) {
 			return null;
 		}
@@ -239,20 +238,20 @@ public class AccWGBTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K, T> 
 
 
 	public Set<T> getValues(K key) {
-		return GreyGetterAsc.get(grey, key, key.hashCode());
+		return GreyGetterAcc.get(grey, key, key.hashCode());
 	}
 
 	@Override
 	public T put(K key, T value) {
 		var oldValue = new AtomicReference<T>();
-		grey = GreyInserterAsc.insert(grey, key, Set.of(value), key.hashCode(), oldValue, config);
+		grey = GreyInserterAcc.insert(grey, key, Set.of(value), key.hashCode(), oldValue, config);
 		return oldValue.get();
 	}
 
 	@Override
 	public T remove(Object key) {
 		K k = (K) key;
-		var result = GreyRemoverAsc.remove(grey, k, k.hashCode());
+		var result = GreyRemoverAcc.remove(grey, k, k.hashCode());
 
 		var values = result.isEmpty() ? new HashSet<T>() : result.getEntry().getValue();
 		if (values.size() > 1) {

@@ -1,6 +1,6 @@
 package com.wgbtree.tree.wgb.operations.rotate.straight;
 
-import com.wgbtree.tree.wgb.model.node.Grey;
+import com.wgbtree.tree.wgb.model.node.grey.Grey;
 import com.wgbtree.tree.wgb.model.info.TreeConfig;
 import com.wgbtree.tree.wgb.operations.delete.straight.GreyRemoverStraight;
 import com.wgbtree.tree.wgb.operations.insert.straight.GreyInserterStraight;

@@ -1,9 +1,112 @@
 package com.wgbtree.tree.wgb.prime;
 
-public class Primes {
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
+public final class Primes {
 
 	public static final int FIRST_PRIME = 2;
+	public static final int FIRST_MERSENNE_EXP = 2;
+	public static final int FIRST_MERSENNE_PRIME = 3;
+	public static final int MAX_MERSENNE_PRIME_FOR_NODE = 8191;
 
+	/**
+	 * Returns whether the given number is a Mersenne prime number.
+	 *
+	 * @param number the number
+	 * @return whether the given number is a Mersenne prime number
+	 */
+	public static boolean isMersennePrime(int number) {
+		return switch (number) {
+			case 3, 7, 31, 127, 8191, 131071, 524287, 2147483647 -> true;
+			default -> false;
+		};
+	}
+
+	/**
+	 * Returns the Mersenne prime number for the given exponent.
+	 *
+	 * @param exp the exponent
+	 * @return the Mersenne prime number for the given exponent
+	 */
+	public static int mersenneFromExp(int exp) {
+		return switch (exp) {
+			case 2 -> 3;
+			case 3 -> 7;
+			case 5 -> 31;
+			case 7 -> 127;
+			case 13 -> 8191;
+			case 17 -> 131071;
+			case 19 -> 524287;
+			case 31 -> 2147483647;
+			default -> throw new IllegalArgumentException("No Mersenne prime found for " + exp);
+		};
+	}
+
+	/**
+	 * Returns the exponent of the Mersenne prime number for the given number.
+	 *
+	 * @param number the number
+	 * @return the exponent of the Mersenne prime number for the given number
+	 */
+	public static int mersenneExp(int number) {
+		return switch (number) {
+			case 3 -> 2;
+			case 7 -> 3;
+			case 31 -> 5;
+			case 127 -> 7;
+			case 8191 -> 13;
+			case 131071 -> 17;
+			case 524287 -> 19;
+			case 2147483647 -> 31;
+			default -> throw new IllegalArgumentException("No Mersenne prime found for " + number);
+		};
+	}
+
+	/**
+	 * Returns the next Mersenne exponent after the given exponent.
+	 *
+	 * @param exp the exponent
+	 * @return the next Mersenne exponent after the given exponent
+	 */
+	public static int nextMersenneExp(int exp) {
+		return switch (exp) {
+			case 2 -> 3;
+			case 3 -> 5;
+			case 5 -> 7;
+			case 7 -> 13;
+			case 13 -> 17;
+			case 17 -> 19;
+			case 19 -> 31;
+			default -> throw new IllegalArgumentException("No Mersenne prime found for " + exp);
+		};
+	}
+
+	/**
+	 * Returns the previous Mersenne exponent before the given exponent.
+	 *
+	 * @param exp the exponent
+	 * @return the previous Mersenne exponent before the given exponent
+	 */
+	public static int prevMersenneExp(int exp) {
+		return switch (exp) {
+			case 3 -> 2;
+			case 5 -> 3;
+			case 7 -> 5;
+			case 13 -> 7;
+			case 17 -> 13;
+			case 19 -> 17;
+			case 31 -> 19;
+			default -> throw new IllegalArgumentException("No Mersenne prime found for " + exp);
+		};
+	}
+
+	/**
+	 * Returns whether the given number is a prime number.
+	 *
+	 * @param number the number
+	 * @return whether the given number is a prime number
+	 */
 	public static boolean isPrime(int number) {
 		if (number < FIRST_PRIME) {
 			return false;
@@ -26,91 +129,101 @@ public class Primes {
 		return true;
 	}
 
-	public static int nextPrime(int number) {
-		switch (number) {
-			case 0:
-			case 1:
-				return 2;
-			case 2:
-				return 3;
-			case 3:
-			case 4:
-				return 5;
-			case 5:
-			case 6:
-				return 7;
-			case 7:
-			case 8:
-			case 9:
-			case 10:
-				return 11;
-			case 11:
-			case 12:
-				return 13;
-			case 13:
-			case 14:
-			case 15:
-			case 16:
-				return 17;
-			case 17:
-			case 18:
-				return 19;
-			case 19:
-			case 20:
-			case 21:
-			case 22:
-				return 23;
-			default:
-				for (int i = number + 1; ; i++) {
-					if (isPrime(i)) {
-						return i;
-					}
-				}
-		}
+	/**
+	 * Returns the next Mersenne prime number after the given number.
+	 *
+	 * @param number the number
+	 * @return the next Mersenne prime number after the given number
+	 */
+	public static int nextMersennePrime(int number) {
+		return switch (number) {
+			case 0, 1, 2 -> 3;
+			case 3 -> 7;
+			case 7 -> 31;
+			case 31 -> 127;
+			case 127 -> 8191;
+			case 8191 -> 131071;
+			case 131071 -> 524287;
+			case 524287 -> 2147483647;
+			default -> throw new IllegalArgumentException("No Mersenne prime found for " + number);
+		};
 	}
 
+	/**
+	 * Returns the previous Mersenne prime number before the given number.
+	 *
+	 * @param number the number
+	 * @return the previous Mersenne prime number before the given number
+	 */
+	public static int prevMersennePrime(int number) {
+		return switch (number) {
+			case 7, 3 -> 3;
+			case 31 -> 7;
+			case 127 -> 31;
+			case 8191 -> 127;
+			case 131071 -> 8191;
+			case 524287 -> 131071;
+			case 2147483647 -> 524287;
+			default -> throw new IllegalArgumentException("No Mersenne prime found for " + number);
+		};
+	}
+
+	/**
+	 * Returns the next prime number after the given number.
+	 *
+	 * @param number the number
+	 * @return the next prime number after the given number
+	 */
+	public static int nextPrime(int number) {
+		return switch (number) {
+			case 0, 1 -> 2;
+			case 2 -> 3;
+			case 3, 4 -> 5;
+			case 5, 6 -> 7;
+			case 7, 8, 9, 10 -> 11;
+			case 11, 12 -> 13;
+			case 13, 14, 15, 16 -> 17;
+			case 17, 18 -> 19;
+			case 19, 20, 21, 22 -> 23;
+			case 23, 24, 25, 26, 27, 28 -> 29;
+			case 29, 30 -> 31;
+			default -> {
+				for (int i = number + 1; ; i++) {
+					if (isPrime(i)) {
+						yield i;
+					}
+				}
+			}
+		};
+	}
+
+	/**
+	 * Returns the previous prime number before the given number.
+	 *
+	 * @param number the number
+	 * @return the previous prime number before the given number
+	 */
 	public static int prevPrime(int number) {
 		if (number < FIRST_PRIME) {
 			return FIRST_PRIME;
 		}
 
-		switch (number) {
-			case 2:
-			case 3:
-			  return 2;
-			case 4:
-			case 5:
-			  return 3;
-			case 6:
-			case 7:
-			  return 5;
-			case 8:
-			case 9:
-			case 10:
-			case 11:
-			  return 7;
-			case 12:
-			case 13:
-			  return 11;
-			case 14:
-			case 15:
-			case 16:
-			case 17:
-			  return 13;
-			case 18:
-			case 19:
-			  return 17;
-			case 20:
-			case 21:
-			case 22:
-			case 23:
-			  return 19;
-			default:
+		return switch (number) {
+			case 2, 3 -> 2;
+			case 4, 5 -> 3;
+			case 6, 7 -> 5;
+			case 8, 9, 10, 11 -> 7;
+			case 12, 13 -> 11;
+			case 14, 15, 16, 17 -> 13;
+			case 18, 19 -> 17;
+			case 20, 21, 22, 23 -> 19;
+			default -> {
 				for (int i = number - 1; ; i--) {
 					if (isPrime(i)) {
-						return i;
+						yield i;
 					}
 				}
-		}
+			}
+		};
 	}
 }

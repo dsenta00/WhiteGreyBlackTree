@@ -8,6 +8,7 @@ import static lombok.AccessLevel.PRIVATE;
 @NoArgsConstructor(access = PRIVATE)
 public final class RankCalculator {
 
+
 	public static int calculateGreatestCapacity(int order, int rank) {
 		int prevCapacity = 1;
 		int capacity = 3;

@@ -1,6 +1,6 @@
 package com.wgbtree.tree.wgb.handler;
 
-import com.wgbtree.tree.wgb.model.node.White;
+import com.wgbtree.tree.wgb.model.node.white.White;
 import lombok.NoArgsConstructor;
 
 import java.util.Arrays;

@@ -1,6 +1,6 @@
 package com.wgbtree.tree.wgb.creator;
 
-import com.wgbtree.tree.wgb.model.node.Grey;
+import com.wgbtree.tree.wgb.model.node.grey.Grey;
 import com.wgbtree.tree.wgb.model.info.TreeConfig;
 import lombok.NoArgsConstructor;
 

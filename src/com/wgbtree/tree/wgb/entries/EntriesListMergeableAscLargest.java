@@ -36,10 +36,6 @@ public class EntriesListMergeableAscLargest<K extends Comparable<K>, T> extends 
 		// Reset leaked entry
 		leakedEntry.set(null);
 
-		if (entry == null) {
-			throw new NullPointerException();
-		}
-
 		Optional<Map.Entry<K, Set<T>>> existingEntryOptional = find(entry.getKey());
 		if (existingEntryOptional.isPresent()) {
 			existingEntryOptional.get().getValue().addAll(entry.getValue());
