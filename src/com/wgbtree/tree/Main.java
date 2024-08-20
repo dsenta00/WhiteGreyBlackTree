@@ -1,8 +1,8 @@
 package com.wgbtree.tree;
 
-import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.model.*;
@@ -13,62 +13,72 @@ import com.wgbtree.tree.wgb.MersenneAccWgbTreeMap;
 import com.wgbtree.tree.wgb.MersenneDecWgbTreeMap;
 import com.wgbtree.tree.wgb.WGBPowerTreeMap;
 
-import java.io.FileWriter;
 import java.util.*;
 
 public class Main {
 
-	private static final Map<String, Map<String, StringBuilder>> buffers = new HashMap<>();
-	private static final Map<String, BatchWriteItemRequest> batchWriteItemRequests = new HashMap<>();
+	private static final Map<String, List<WriteRequest>> batchWriteItemRequests = new HashMap<>();
+	private static final List<UpdateItemRequest> updateItemRequests = new ArrayList<>();
 	private static final int MIN_BUFFER_SIZE_LIMIT = 10_000;
 	private static final int MAX_BUFFER_SIZE_LIMIT = 100_000;
 	private static int bufferLimit = MIN_BUFFER_SIZE_LIMIT;
-	private static final int MAX_REPEAT = 6;
-	private static final int MIN_TOTAL_COUNT = 128_000;
+	private static final int MAX_REPEAT = 13;
+	private static final int MIN_TOTAL_COUNT = 1000;
 	private static final int MAX_TOTAL_COUNT = 4_196_000;
+	private static final int DYNAMO_DB_MAX_BATCH_SIZE = 25;
+	private static int batchSize = 0;
 
-	private static final AmazonDynamoDB dynamoDbClient = AmazonDynamoDBClient.builder()
-			.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration("http://localhost:8001", "us-east-2"))
-			.build();
+	private static final AmazonDynamoDBAsync dynamoDbClient = AmazonDynamoDBAsyncClient.asyncBuilder()
+	 		.withEndpointConfiguration(new EndpointConfiguration("http://localhost:8001", "us-east-2"))
+	 		.build();
 
 	private static final DynamoDB dynamoDb = new DynamoDB(dynamoDbClient);
 
 	public static void flushBuffer() {
-		buffers.forEach((operation, map) -> map.forEach((treeName, buffer) -> flushBuffer(operation, treeName, buffer)));
+		dynamoDbClient.batchWriteItem(new HashMap<>(batchWriteItemRequests));
+		batchWriteItemRequests.clear();
+		batchSize = 0;
 	}
 
 	public static void writeToTable(String operation, int count, String treeName, long metric) {
-		GetItemRequest getItemRequest = new GetItemRequest()
+		var getItemRequest = new GetItemRequest()
 				.withTableName(operation)
 				.withKey(Map.of("tree_name", new AttributeValue(treeName), "count", new AttributeValue().withN(String.valueOf(count))));
 
-		if (dynamoDbClient.getItem(getItemRequest).getItem() != null) {
+		var item = dynamoDbClient.getItem(getItemRequest).getItem();
+
+		if (item != null) {
+			var existingMetric = Long.parseLong(item.get("metric").getN());
+			int hits = Integer.parseInt(item.get("hits").getN());
+
+			int newHits = hits + 1;
+			long newMetric = (existingMetric * hits + metric) / newHits;
+
 			var updateItemRequest = new UpdateItemRequest()
 					.withTableName(operation)
 					.withKey(Map.of("tree_name", new AttributeValue(treeName), "count", new AttributeValue().withN(String.valueOf(count))))
-					.withUpdateExpression("set #m = :m")
-					.withExpressionAttributeNames(Map.of("#m", "metric"))
-					.withExpressionAttributeValues(Map.of(":m", new AttributeValue().withN(String.valueOf(metric)));
-		}
-		batchWriteItemRequests.put(operation, new BatchWriteItemRequest())
-		var buffer = buffers.computeIfAbsent(operation, k -> new HashMap<>())
-				.computeIfAbsent(treeName, k -> new StringBuilder())
-				.append(count)
-				.append(",")
-				.append(metric)
-				.append("\n");
+					.withUpdateExpression("set #m = :m, #h = :h")
+					.withExpressionAttributeNames(Map.of("#m", "metric", "#h", "hits"))
+					.withExpressionAttributeValues(Map.of(":m", new AttributeValue().withN(String.valueOf(newMetric)), ":h", new AttributeValue().withN(String.valueOf(newHits))));
 
-		flushBuffer(operation, treeName, buffer);
-	}
+			updateItemRequests.add(updateItemRequest);
 
-	public static void flushBuffer(String operation, String treeName, StringBuilder buffer) {
-		if (buffer.length() >= bufferLimit) {
-			try (var writer = new FileWriter(operation + "_" + treeName + ".csv", true)) {
-				writer.write(buffer.toString());
-			} catch (Exception e) {
-				System.out.println(" > Error writing to file: " + e.getMessage());
-			} finally {
-				buffer.setLength(0);
+			if (updateItemRequests.size() >= DYNAMO_DB_MAX_BATCH_SIZE) {
+				updateItemRequests.forEach(dynamoDbClient::updateItem);
+				updateItemRequests.clear();
+			}
+		} else {
+			var itemRequest = new HashMap<String, AttributeValue>();
+			itemRequest.put("tree_name", new AttributeValue(treeName));
+			itemRequest.put("count", new AttributeValue().withN(String.valueOf(count)));
+			itemRequest.put("metric", new AttributeValue().withN(String.valueOf(metric)));
+			itemRequest.put("hits", new AttributeValue().withN("1"));
+
+            var list = batchWriteItemRequests.computeIfAbsent(operation, k -> new LinkedList<>());
+            list.add(new WriteRequest().withPutRequest(new PutRequest().withItem(itemRequest)));
+
+			if (++batchSize >= DYNAMO_DB_MAX_BATCH_SIZE) {
+				flushBuffer();
 			}
 		}
 	}
@@ -123,11 +133,6 @@ public class Main {
 			System.err.println("CreateTable request failed for " + tableName);
 			System.err.println(e.getMessage());
 		}
-	}
-
-	public static void createCsvFiles(List<AsTree<String, Boolean>> trees) {
-		c
-		trees.forEach(tree -> createTables(tree.getName()));
 	}
 
 	public static void main(String[] args) {
@@ -305,7 +310,7 @@ public class Main {
 			trees.forEach(tree -> {
 				for (int count = 1; count < finalTotalCount; count++) {
 					try {
-						if (count % 1_000 == 0) {
+						if (count % DYNAMO_DB_MAX_BATCH_SIZE == 0) {
 							System.out.println(" > Tree " + tree.getName() + " > Rep: " + finalRep + ", Count: " + count);
 						}
 
