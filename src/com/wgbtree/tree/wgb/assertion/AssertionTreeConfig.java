@@ -28,7 +28,7 @@ public final class AssertionTreeConfig {
 		//
 		// where p is the power.
 		//
-		if (power > 10) {
+		if (power > 13) {
 			throw new IllegalArgumentException("Power must be less than or equal to 10, got " + power + " instead.");
 		}
 
@@ -52,28 +52,10 @@ public final class AssertionTreeConfig {
 			throw new IllegalArgumentException("Exponent must be greater at least " + FIRST_MERSENNE_EXP + ", got " + exp + " instead.");
 		}
 
-		if (!isMersennePrime(mersenneFromExp(exp))) {
+		if (isNotMersennePrime(mersenneFromExp(exp))) {
 			throw new IllegalArgumentException("Exponent must be a Mersenne prime number, got " + exp + " instead.");
 		}
 
 		return exp;
 	}
-
-	public static int assertMersenneRank(int rank) {
-		if (rank < FIRST_MERSENNE_PRIME) {
-			throw new IllegalArgumentException("Rank must be greater at least 3, got " + rank + " instead.");
-		}
-
-		if (rank > MAX_MERSENNE_PRIME_FOR_NODE) {
-			throw new IllegalArgumentException("Rank must be less than or equal to " + MAX_MERSENNE_PRIME_FOR_NODE + ", got " + rank + " instead.");
-		}
-
-		if (!isMersennePrime(rank)) {
-			throw new IllegalArgumentException("Rank must be a Mersenne prime number, got " + rank + " instead.");
-		}
-
-		return rank;
-	}
-
-
 }

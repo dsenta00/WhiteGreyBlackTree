@@ -16,8 +16,8 @@ public final class Primes {
 	 * @param number the number
 	 * @return whether the given number is a Mersenne prime number
 	 */
-	public static boolean isMersennePrime(int number) {
-		return switch (number) {
+	public static boolean isNotMersennePrime(int number) {
+		return !switch (number) {
 			case 3, 7, 31, 127, 8191, 131071, 524287, 2147483647 -> true;
 			default -> false;
 		};
@@ -127,45 +127,6 @@ public final class Primes {
 		}
 
 		return true;
-	}
-
-	/**
-	 * Returns the next Mersenne prime number after the given number.
-	 *
-	 * @param number the number
-	 * @return the next Mersenne prime number after the given number
-	 */
-	public static int nextMersennePrime(int number) {
-		return switch (number) {
-			case 0, 1, 2 -> 3;
-			case 3 -> 7;
-			case 7 -> 31;
-			case 31 -> 127;
-			case 127 -> 8191;
-			case 8191 -> 131071;
-			case 131071 -> 524287;
-			case 524287 -> 2147483647;
-			default -> throw new IllegalArgumentException("No Mersenne prime found for " + number);
-		};
-	}
-
-	/**
-	 * Returns the previous Mersenne prime number before the given number.
-	 *
-	 * @param number the number
-	 * @return the previous Mersenne prime number before the given number
-	 */
-	public static int prevMersennePrime(int number) {
-		return switch (number) {
-			case 7, 3 -> 3;
-			case 31 -> 7;
-			case 127 -> 31;
-			case 8191 -> 127;
-			case 131071 -> 8191;
-			case 524287 -> 131071;
-			case 2147483647 -> 524287;
-			default -> throw new IllegalArgumentException("No Mersenne prime found for " + number);
-		};
 	}
 
 	/**

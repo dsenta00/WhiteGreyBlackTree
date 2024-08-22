@@ -10,6 +10,7 @@ import com.wgbtree.tree.wgb.operations.delete.dec.BlackRemoverDec;
 import com.wgbtree.tree.wgb.operations.delete.dec.GreyRemoverDec;
 import com.wgbtree.tree.wgb.operations.delete.mersenne.BlackRemoverMersenne;
 import com.wgbtree.tree.wgb.operations.delete.mersenne.GreyRemoverMersenne;
+import com.wgbtree.tree.wgb.operations.delete.power.BlackRemoverPower;
 import com.wgbtree.tree.wgb.operations.delete.straight.GreyRemoverStraight;
 
 import java.util.AbstractMap.SimpleEntry;
@@ -28,6 +29,7 @@ public class WhiteGreyBlackTreeMapTest extends Test {
 	final static int TEST_ORDER = 5;
 
 	public static void main(String[] args) {
+		testRemoveMinFromBlack(BlackRemoverPower::removeMin);
 		testRemoveMinFromBlack(BlackRemoverAcc::removeMin);
 		testRemoveMinFromBlack(BlackRemoverDec::removeMin);
 		testRemoveMinFromBlack(BlackRemoverMersenne::removeMin);
@@ -44,20 +46,25 @@ public class WhiteGreyBlackTreeMapTest extends Test {
 		testRemoveMax(GreyRemoverMersenne::removeMax, false);
 		testRemoveMax(GreyRemoverMersenne::removeMax, true);
 
-		testInsert(new MersenneAccWgbTreeMap<>(TEST_ORDER));
-		testInsert(new MersenneDecWgbTreeMap<>(TEST_ORDER));
-		testInsert(new AccWGBTreeMap<>(TEST_ORDER));
-		testInsert(new DecWGBTreeMap<>(25, TEST_ORDER));
-		testInsert(new StraightWGBTreeMap<>(TEST_ORDER));
-		testInsertBalance(new AccWGBTreeMap<>(TEST_ORDER));
-		testInsertBalance(new DecWGBTreeMap<>(TEST_CAPACITY, TEST_ORDER));
-		testInsertBalance(new StraightWGBTreeMap<>(TEST_ORDER));
+		testInsert(new MersenneAccWgbTreeMap<>(TEST_ORDER, 5, true));
+		testInsert(new MersenneDecWgbTreeMap<>(TEST_ORDER, 5, true));
+		testInsert(new AccWGBTreeMap<>(TEST_ORDER, 2, true));
+		testInsert(new StraightWGBTreeMap<>(TEST_ORDER, true));
+		testInsert(new WGBPowerTreeMap<>(TEST_ORDER, 8, true));
+		testInsert(new DecWGBTreeMap<>(25, TEST_ORDER, false, true));
+
+		testInsertBalance(new AccWGBTreeMap<>(TEST_ORDER, 2, true));
+		testInsertBalance(new DecWGBTreeMap<>(TEST_CAPACITY, TEST_ORDER, false, true));
+		testInsertBalance(new StraightWGBTreeMap<>(TEST_ORDER, true));
+		testInsertBalance(new WGBPowerTreeMap<>(TEST_ORDER, 8, true));
+
 		testPopulation(new MersenneAccWgbTreeMap<>());
 		testPopulation(new MersenneDecWgbTreeMap<>());
 		testPopulation(new AccWGBTreeMap<>());
 		testPopulation(new AccWGBTreeMap<>(3, 2, true, true));
 		testPopulation(new DecWGBTreeMap<>(TEST_CAPACITY));
 		testPopulation(new StraightWGBTreeMap<>());
+		testPopulation(new WGBPowerTreeMap<>(TEST_ORDER, 8));
 	}
 
 	private static void testPopulation(WGBTreeMap<String, Integer> tree) {
