@@ -126,7 +126,7 @@ public class MersenneDecWgbTreeMap<K extends Comparable<K>, T> extends WGBTreeMa
 
 	@Override
 	public List<Set<T>> getBetweenAsc(K from, K to) {
-		return null;
+		return GreyGetterMersenne.getBetweenAsc(grey, from, to);
 	}
 
 	@Override

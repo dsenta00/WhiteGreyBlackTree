@@ -2,8 +2,8 @@ package com.wgbtree.tree.wgb.entries;
 
 import com.wgbtree.tree.wgb.constants.LeakPolicy;
 import com.wgbtree.tree.wgb.handler.EntrySearcher;
+import com.wgbtree.tree.wgb.utils.InsertionSort;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -46,7 +46,7 @@ public class EntriesListMergeableAscLargest<K extends Comparable<K>, T> extends 
 				array[size++] = entry;
 			}
 
-			Arrays.sort(array, 0, size, Map.Entry.comparingByKey());
+			InsertionSort.sortAscFromBack(array, size);
 		}
 		return true;
 	}
@@ -54,5 +54,10 @@ public class EntriesListMergeableAscLargest<K extends Comparable<K>, T> extends 
 	@Override
 	public int search(K key) {
 		return EntrySearcher.searchAsc(array, key, size);
+	}
+
+	@Override
+	public int searchClosest(K key) {
+		return EntrySearcher.searchClosestAsc(array, key, size);
 	}
 }

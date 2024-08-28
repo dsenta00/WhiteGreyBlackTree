@@ -2,6 +2,7 @@ package com.wgbtree.tree.wgb;
 
 import com.wgbtree.tree.AsTree;
 import com.wgbtree.tree.wgb.creator.TreeConfigCreator;
+import com.wgbtree.tree.wgb.handler.GreyHandler;
 import com.wgbtree.tree.wgb.operations.delete.mersenne.GreyRemoverMersenne;
 import com.wgbtree.tree.wgb.operations.get.dec.GreyGetterDec;
 import com.wgbtree.tree.wgb.operations.get.mersenne.GreyGetterMersenne;
@@ -125,7 +126,7 @@ public class MersenneAccWgbTreeMap <K extends Comparable<K>, T> extends WGBTreeM
 
 	@Override
 	public List<Set<T>> getBetweenAsc(K from, K to) {
-		return null;
+		return GreyHandler.getBetweenAsc(grey, from, to);
 	}
 
 	@Override

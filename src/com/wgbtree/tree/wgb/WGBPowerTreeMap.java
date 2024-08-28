@@ -2,6 +2,7 @@ package com.wgbtree.tree.wgb;
 
 import com.wgbtree.tree.AsTree;
 import com.wgbtree.tree.wgb.creator.TreeConfigCreator;
+import com.wgbtree.tree.wgb.handler.GreyHandler;
 import com.wgbtree.tree.wgb.operations.delete.power.GreyRemoverPower;
 import com.wgbtree.tree.wgb.operations.get.acc.GreyGetterAcc;
 import com.wgbtree.tree.wgb.operations.get.power.GreyGetterPower;
@@ -115,11 +116,6 @@ public class WGBPowerTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K, T
 
 	@Override
 	public List<Set<T>> getNotInDesc(List<K> keys) {
-		return null;
-	}
-
-	@Override
-	public List<Set<T>> getBetweenAsc(K from, K to) {
 		return null;
 	}
 
@@ -254,5 +250,10 @@ public class WGBPowerTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K, T
 		}
 
 		return values.stream().findFirst().orElse(null);
+	}
+
+	@Override
+	public List<Set<T>> getBetweenAsc(K from, K to) {
+		return GreyHandler.getBetweenAsc(grey, from, to);
 	}
 }

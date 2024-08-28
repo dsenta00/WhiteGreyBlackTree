@@ -365,23 +365,39 @@ public class BPlusTreeMap<K extends Comparable<K>, T> implements AsTree<K, T> {
 
 	private List<Set<T>> getBetweenAsc(BPlusTreeNode node, K from, K to) {
 		List<Set<T>> res = new ArrayList<>();
-		if (node.getClass().equals(BPlusTreeLeafNode.class)) {
-			for (int i = node.entryIndexUpperBound(from); i < node.entries.size(); ++i) {
-				if (node.entries.get(i).compareTo(to) >= 0) {
-					break;
+
+		if (node instanceof BPlusTreeLeafNode) {
+			// Leaf node processing
+			BPlusTreeLeafNode leaf = (BPlusTreeLeafNode) node;
+			for (int i = 0; i < leaf.entries.size(); ++i) {
+				K key = leaf.entries.get(i);
+				if (key.compareTo(from) >= 0 && key.compareTo(to) < 0) {
+					res.add(leaf.data.get(i));
 				}
-				res.add(((BPlusTreeLeafNode) node).data.get(i));
+				if (key.compareTo(to) >= 0) {
+					break; // No need to check further entries
+				}
 			}
 		} else {
-			for (int i = 0; i < node.entries.size(); ++i) {
-				if (node.entries.get(i).compareTo(from) >= 0) {
-					res.addAll(getBetweenAsc(((BPlusTreeNonLeafNode) node).children.get(i), from, to));
+			// Non-leaf node processing
+			BPlusTreeNonLeafNode nonLeaf = (BPlusTreeNonLeafNode) node;
+			for (int i = 0; i < nonLeaf.entries.size(); ++i) {
+				K key = nonLeaf.entries.get(i);
+
+				if (key.compareTo(from) >= 0) {
+					// Recursively process child node
+					res.addAll(getBetweenAsc(nonLeaf.children.get(i), from, to));
 				}
-				if (node.entries.get(i).compareTo(to) >= 0) {
-					break;
+				if (key.compareTo(to) >= 0) {
+					break; // No need to check further entries
 				}
 			}
+			// Process the last child node (if `to` is greater than the last entry key)
+			if (nonLeaf.children.size() > nonLeaf.entries.size()) {
+				res.addAll(getBetweenAsc(nonLeaf.children.get(nonLeaf.children.size() - 1), from, to));
+			}
 		}
+
 		return res;
 	}
 
@@ -1173,18 +1189,6 @@ public class BPlusTreeMap<K extends Comparable<K>, T> implements AsTree<K, T> {
 		@Override
 		public String toString() {
 			return entries.toString();
-		}
-	}
-
-	private static class RemoveResult {
-
-		public boolean isRemoved;
-
-		public boolean isUnderflow;
-
-		public RemoveResult(boolean isRemoved, boolean isUnderflow) {
-			this.isRemoved = isRemoved;
-			this.isUnderflow = isUnderflow;
 		}
 	}
 }

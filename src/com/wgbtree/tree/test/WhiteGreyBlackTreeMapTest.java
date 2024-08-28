@@ -1,5 +1,8 @@
 package com.wgbtree.tree.test;
 
+import com.wgbtree.tree.AsTree;
+import com.wgbtree.tree.bplus.BPlusTreeMap;
+import com.wgbtree.tree.redblack.TreeMapAsTree;
 import com.wgbtree.tree.wgb.*;
 import com.wgbtree.tree.wgb.model.node.black.Black;
 import com.wgbtree.tree.wgb.model.node.grey.Grey;
@@ -20,8 +23,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import static com.wgbtree.tree.Main.measureTime;
-
 public class WhiteGreyBlackTreeMapTest extends Test {
 
 	final static int TOTAL_WEIGHT = 1_000_000;
@@ -29,6 +30,16 @@ public class WhiteGreyBlackTreeMapTest extends Test {
 	final static int TEST_ORDER = 5;
 
 	public static void main(String[] args) {
+
+		testGetBetweenAsc(new TreeMapAsTree<>());
+		testGetBetweenAsc(new BPlusTreeMap<>(5));
+		testGetBetweenAsc(new MersenneAccWgbTreeMap<>(TEST_ORDER, 5, true));
+		testGetBetweenAsc(new MersenneDecWgbTreeMap<>(TEST_ORDER, 5, true));
+		testGetBetweenAsc(new AccWGBTreeMap<>(TEST_ORDER, 2, true));
+		testGetBetweenAsc(new StraightWGBTreeMap<>(TEST_ORDER, true));
+		testGetBetweenAsc(new WGBPowerTreeMap<>(TEST_ORDER, 8, true));
+		testGetBetweenAsc(new DecWGBTreeMap<>(25, TEST_ORDER, false, true));
+
 		testRemoveMinFromBlack(BlackRemoverPower::removeMin);
 		testRemoveMinFromBlack(BlackRemoverAcc::removeMin);
 		testRemoveMinFromBlack(BlackRemoverDec::removeMin);
@@ -65,6 +76,45 @@ public class WhiteGreyBlackTreeMapTest extends Test {
 		testPopulation(new DecWGBTreeMap<>(TEST_CAPACITY));
 		testPopulation(new StraightWGBTreeMap<>());
 		testPopulation(new WGBPowerTreeMap<>(TEST_ORDER, 8));
+	}
+
+	private static void testGetBetweenAsc(AsTree<String, Integer> tree) {
+		tree.put("a", 1);
+		tree.put("b", 2);
+		tree.put("c", 3);
+		tree.put("d", 4);
+		tree.put("e", 5);
+		tree.put("f", 6);
+		tree.put("g", 7);
+		tree.put("h", 8);
+		tree.put("i", 9);
+		tree.put("j", 10);
+		tree.put("k", 11);
+		tree.put("l", 12);
+		tree.put("m", 13);
+		tree.put("n", 14);
+		tree.put("o", 15);
+		tree.put("p", 16);
+		tree.put("q", 17);
+		tree.put("r", 18);
+		tree.put("s", 19);
+		tree.put("t", 20);
+		tree.put("u", 21);
+		tree.put("v", 22);
+		tree.put("w", 23);
+		tree.put("x", 24);
+		tree.put("y", 25);
+		tree.put("z", 26);
+
+		final List<Set<Integer>> list = tree.getBetweenAsc("d", "j");
+		System.out.println(tree.getName() + " getBetweenAsc(\"d\", \"j\") -> " + list);
+		assertEquals(6, list.size());
+		IntStream.range(0, 6).forEach(i -> assertEquals(i + 4, list.get(i).stream().findFirst().orElse(null)));
+
+		final List<Set<Integer>> list2 = tree.getBetweenAsc("a", "z");
+		System.out.println(tree.getName() + " getBetweenAsc(\"a\", \"z\") -> " + list2);
+		assertEquals(25, list2.size());
+		IntStream.range(0, 25).forEach(i -> assertEquals(i + 1, list2.get(i).stream().findFirst().orElse(null)));
 	}
 
 	private static void testPopulation(WGBTreeMap<String, Integer> tree) {

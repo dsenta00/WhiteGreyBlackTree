@@ -2,6 +2,7 @@ package com.wgbtree.tree.wgb.entries;
 
 import com.wgbtree.tree.wgb.constants.LeakPolicy;
 import com.wgbtree.tree.wgb.handler.EntrySearcher;
+import com.wgbtree.tree.wgb.utils.InsertionSort;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,7 +48,7 @@ public class EntriesListNonMergeableDescSmallest<K extends Comparable<K>, T> ext
 				array[size++] = entry;
 			}
 
-			Arrays.sort(array, 0, size, Map.Entry.comparingByKey(Comparator.reverseOrder()));
+			InsertionSort.sortDescFromBack(array, size);
 		}
 		return true;
 	}
@@ -55,5 +56,10 @@ public class EntriesListNonMergeableDescSmallest<K extends Comparable<K>, T> ext
 	@Override
 	public int search(K key) {
 		return EntrySearcher.searchDesc(array, key, size);
+	}
+
+	@Override
+	public int searchClosest(K key) {
+		return EntrySearcher.searchClosestDesc(array, key, size);
 	}
 }

@@ -1,10 +1,9 @@
-from sys import base_prefix
+import random
 
 import boto3
 import matplotlib.pyplot as plt
-import random
 
-tables = ["insert", "search", "searchMin", "searchMax", "depth"]
+tables = ["insert", "search", "searchMin", "searchMax", "depth", "searchRange"]
 colors = ["red", "blue", "green", "orange", "purple", "brown", "pink", "gray", "olive", "cyan"]
 
 dynamodb_client = boto3.client(
@@ -288,6 +287,7 @@ def plot_graph_range(min_count, max_count):
 print(" Fetching trees...")
 tree_names = fetch_all_tree_names()
 selected_tree_names = set()
+to_print = True
 
 while True:
     selected_tree_names.clear()
@@ -297,7 +297,9 @@ while True:
 
     while True:
 
-        if len(selected_tree_names) == 0:
+        if to_print is False:
+            to_print = True
+        elif len(selected_tree_names) == 0:
             print("No trees selected. Type 'add <tree_name>' to add a tree to the selection.")
         else:
             print("Selected trees:")
@@ -329,30 +331,25 @@ while True:
         elif command == "list":
             for idx, tree_name in enumerate(selected_tree_names):
                 print(f"\t{idx + 1}. {tree_name}")
-        elif command == "plot":
-            break
+            to_print = False
+        elif command.startswith("plot"):
+            print("Fetching data and plotting graphs...")
+            selected_tree_names = list(selected_tree_names)
+            min_count = int(command.split("plot ")[1].split(" ")[0])
+            max_count = int(command.split("plot ")[1].split(" ")[1])
+            print_tree_ranking(min_count, max_count)
+            plot_graph_range(min_count, max_count)
+            to_print = False
+            continue
         elif command == "help":
             print("Commands:")
             print("\tadd <tree_name>: Add a tree to the selection")
             print("\trm <tree_name>: Remove a tree from the selection")
             print("\texit: Exit the program")
+            to_print = False
             continue
         else:
             print("Invalid command. Type 'help' for a list of commands.")
+            to_print = False
             continue
-
-    selected_tree_names = list(selected_tree_names)
-
-    print("Fetching data and plotting graphs...")
-    print_tree_ranking(0, 10_000)
-    plot_graph_range(0, 10_000)
-
-    print_tree_ranking(10_000, 100_000)
-    plot_graph_range(10_000, 100_000)
-
-    print_tree_ranking(100_000, 1_000_000)
-    plot_graph_range(100_000, 1_000_000)
-
-    print_tree_ranking(0, 1000000)
-    plot_graph_range(0, 1000000)
 

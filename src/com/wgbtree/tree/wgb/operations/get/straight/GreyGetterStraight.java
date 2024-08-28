@@ -3,8 +3,8 @@ package com.wgbtree.tree.wgb.operations.get.straight;
 import com.wgbtree.tree.heap.MaxHeapTree;
 import com.wgbtree.tree.heap.MinHeapTree;
 import com.wgbtree.tree.wgb.comparator.EntryComparator;
-import com.wgbtree.tree.wgb.model.node.grey.Grey;
 import com.wgbtree.tree.wgb.model.node.Node;
+import com.wgbtree.tree.wgb.model.node.grey.Grey;
 import com.wgbtree.tree.wgb.model.result.GreySearchResult;
 import lombok.NoArgsConstructor;
 
@@ -156,5 +156,50 @@ public final class GreyGetterStraight {
 
 	public static <T, K extends Comparable<K>> List<Set<T>> getInAsc(Grey<K, T> grey, List<K> keys) {
 		throw new UnsupportedOperationException("Not implemented yet");
+	}
+
+	public static <T, K extends Comparable<K>>
+	List<Set<T>> getBetweenAsc(Grey<K, T> grey, K from, K to) {
+		if (isNull(grey)) {
+			return List.of();
+		}
+
+		if (from.compareTo(to) > 0) {
+			return List.of();
+		}
+
+		List<Set<T>> list = new LinkedList<>();
+		getBetweenAsc(list, grey, from, to);
+		return list;
+	}
+
+	private static <T, K extends Comparable<K>>
+	void getBetweenAsc(List<Set<T>> list, Grey<K, T> grey, K from, K to) {
+		if (isNull(grey)) {
+			return;
+		}
+
+		var entries = grey.getEntries();
+		K firstKey = entries.firstEntry().getKey();
+		int index = 0;
+
+		if (firstKey.compareTo(from) > 0) {
+			getBetweenAsc(list, (Grey<K, T>) grey.getLeft(), from, to);
+		} else {
+			index = entries.searchClosest(from);
+		}
+
+		for (int i = index; i < entries.size(); i++) {
+			if (entries.get(i).getKey().compareTo(to) >= 0) {
+				return;
+			}
+			list.add(entries.get(i).getValue());
+		}
+
+		K lastKey = entries.lastEntry().getKey();
+
+		if (lastKey.compareTo(to) < 0) {
+			getBetweenAsc(list, (Grey<K, T>) grey.getRight(), from, to);
+		}
 	}
 }

@@ -109,4 +109,65 @@ public final class WhiteGetterMersenne {
 			}
 		}
 	}
+
+	public static <T, K extends Comparable<K>>
+	void getBetweenAsc(List<Set<T>> list, White<K, T> white, K from, K to) {
+		if (isNull(white)) {
+			return;
+		}
+
+		var entries = white.getEntries();
+
+		if (to.compareTo(entries.firstEntry().getKey()) < 0) {
+			return;
+		}
+
+		if (from.compareTo(entries.lastEntry().getKey()) <= 0) {
+			int index = entries.searchClosest(from);
+
+			for (int i = index; i < entries.size(); i++) {
+				list.add(entries.get(i).getValue());
+			}
+		}
+
+		if (to.compareTo(entries.lastEntry().getKey()) > 0) {
+			var minHeapTree = new MinHeapTree<K, T>();
+			for (var grey : white.getGreys()) {
+				if (grey != null) {
+					GreyGetterMersenne.getBetweenAsc(minHeapTree, grey, from, to);
+				}
+			}
+
+			list.addAll(minHeapTree.popAll());
+		}
+	}
+
+	public static <T, K extends Comparable<K>>
+	void getBetweenAsc(MinHeapTree<K, T> minHeapTree, White<K, T> white, K from, K to) {
+		if (isNull(white)) {
+			return;
+		}
+
+		var entries = white.getEntries();
+
+		if (to.compareTo(entries.firstEntry().getKey()) < 0) {
+			return;
+		}
+
+		if (from.compareTo(entries.lastEntry().getKey()) <= 0) {
+			int index = entries.searchClosest(to);
+
+			for (int i = index; i < entries.size(); i++) {
+				minHeapTree.push(entries.get(i));
+			}
+		}
+
+		if (to.compareTo(entries.lastEntry().getKey()) > 0) {
+			for (var grey : white.getGreys()) {
+				if (grey != null) {
+					GreyGetterMersenne.getBetweenAsc(minHeapTree, grey, from, to);
+				}
+			}
+		}
+	}
 }

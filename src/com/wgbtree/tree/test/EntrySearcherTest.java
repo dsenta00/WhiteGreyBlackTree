@@ -15,6 +15,7 @@ class EntrySearcherTest extends Test {
 		testBinarySearchDesc();
 	}
 
+	@SuppressWarnings("unchecked")
 	static void testSearchAsc() {
 		Map.Entry<Integer, Set<Integer>>[] array = (Map.Entry<Integer, Set<Integer>>[]) new Map.Entry<?, ?>[5];
 
@@ -29,6 +30,7 @@ class EntrySearcherTest extends Test {
 		assertEquals(4, index);
 	}
 
+	@SuppressWarnings("unchecked")
 	static void testSearchDesc() {
 		Map.Entry<Integer, Set<Integer>>[] array = (Map.Entry<Integer, Set<Integer>>[]) new Map.Entry<?, ?>[5];
 
@@ -43,6 +45,7 @@ class EntrySearcherTest extends Test {
 		assertEquals(4, index);
 	}
 
+	@SuppressWarnings("unchecked")
 	static void testBinarySearchAsc() {
 		Map.Entry<Integer, Set<Integer>>[] array = (Map.Entry<Integer, Set<Integer>>[]) new Map.Entry<?, ?>[5];
 
@@ -57,6 +60,7 @@ class EntrySearcherTest extends Test {
 		assertEquals(4, index);
 	}
 
+	@SuppressWarnings("unchecked")
 	static void testBinarySearchDesc() {
 		Map.Entry<Integer, Set<Integer>>[] array = (Map.Entry<Integer, Set<Integer>>[]) new Map.Entry<?, ?>[5];
 

@@ -3,9 +3,9 @@ package com.wgbtree.tree.wgb.operations.get.mersenne;
 import com.wgbtree.tree.heap.MaxHeapTree;
 import com.wgbtree.tree.heap.MinHeapTree;
 import com.wgbtree.tree.wgb.comparator.EntryComparator;
+import com.wgbtree.tree.wgb.model.node.Node;
 import com.wgbtree.tree.wgb.model.node.black.Black;
 import com.wgbtree.tree.wgb.model.node.grey.Grey;
-import com.wgbtree.tree.wgb.model.node.Node;
 import com.wgbtree.tree.wgb.model.node.white.White;
 import com.wgbtree.tree.wgb.model.result.GreySearchResult;
 import lombok.NoArgsConstructor;
@@ -241,5 +241,103 @@ public final class GreyGetterMersenne {
 
 	public static <T, K extends Comparable<K>> List<Set<T>> getInAsc(Grey<K, T> grey, List<K> keys) {
 		throw new UnsupportedOperationException("Not implemented yet");
+	}
+
+	public static <T, K extends Comparable<K>>
+	List<Set<T>> getBetweenAsc(Grey<K, T> grey, K from, K to) {
+		if (isNull(grey)) {
+			return List.of();
+		}
+
+		if (from.compareTo(to) > 0) {
+			return List.of();
+		}
+
+		List<Set<T>> list = new LinkedList<>();
+		getBetweenAsc(list, grey, from, to);
+		return list;
+	}
+
+	private static <T, K extends Comparable<K>>
+	void getBetweenAsc(List<Set<T>> list, Grey<K, T> grey, K from, K to) {
+		if (isNull(grey)) {
+			return;
+		}
+
+		var entries = grey.getEntries();
+		K firstKey = entries.firstEntry().getKey();
+		int index = 0;
+
+		if (firstKey.compareTo(from) > 0) {
+			if (nonNull(grey.getLeft())) {
+				if (grey.getLeft() instanceof White<K, T> leftAsWhite) {
+					WhiteGetterMersenne.getBetweenAsc(list, leftAsWhite, from, to);
+				} else if (grey.getLeft() instanceof Grey<K, T> leftAsGrey) {
+					getBetweenAsc(list, leftAsGrey, from, to);
+				}
+			}
+		} else {
+			index = entries.searchClosest(from);
+		}
+
+		for (int i = index; i < entries.size(); i++) {
+			if (entries.get(i).getKey().compareTo(to) >= 0) {
+				return;
+			}
+			list.add(entries.get(i).getValue());
+		}
+
+		K lastKey = entries.lastEntry().getKey();
+
+		if (lastKey.compareTo(to) < 0) {
+			if (nonNull(grey.getRight())) {
+				if (grey.getRight() instanceof Black<K, T> rightAsBlack) {
+					BlackGetterMersenne.getBetweenAsc(list, rightAsBlack, from, to);
+				} else if (grey.getRight() instanceof Grey<K, T> rightAsGrey) {
+					getBetweenAsc(list, rightAsGrey, from, to);
+				}
+			}
+		}
+	}
+
+	public static <K extends Comparable<K>, T>
+	void getBetweenAsc(MinHeapTree<K, T> minHeapTree, Grey<K, T> grey, K from, K to) {
+		if (isNull(grey)) {
+			return;
+		}
+
+		var entries = grey.getEntries();
+		K firstKey = grey.getEntries().firstEntry().getKey();
+		int index = 0;
+
+		if (firstKey.compareTo(from) > 0) {
+			if (nonNull(grey.getLeft())) {
+				if (grey.getLeft() instanceof White<K, T> leftAsWhite) {
+					WhiteGetterMersenne.getBetweenAsc(minHeapTree, leftAsWhite, from, to);
+				} else if (grey.getLeft() instanceof Grey<K, T> leftAsGrey) {
+					getBetweenAsc(minHeapTree, leftAsGrey, from, to);
+				}
+			}
+		} else {
+			index = entries.searchClosest(from);
+		}
+
+		for (int i = index; i < grey.getEntries().size(); i++) {
+			if (entries.get(i).getKey().compareTo(to) >= 0) {
+				return;
+			}
+			minHeapTree.push(entries.get(i));
+		}
+
+		K lastKey = entries.lastEntry().getKey();
+		if (lastKey.compareTo(to) < 0) {
+			if (nonNull(grey.getRight())) {
+				if (grey.getRight() instanceof Black<K, T> rightAsBlack) {
+					BlackGetterMersenne.getBetweenAsc(minHeapTree, rightAsBlack, from, to);
+				} else if (grey.getRight() instanceof Grey<K, T> rightAsGrey) {
+					getBetweenAsc(minHeapTree, rightAsGrey, from, to);
+				}
+			}
+		}
 	}
 }

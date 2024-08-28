@@ -111,11 +111,6 @@ public class StraightWGBTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K
 	}
 
 	@Override
-	public List<Set<T>> getBetweenAsc(K from, K to) {
-		return null;
-	}
-
-	@Override
 	public List<Set<T>> getBetweenDesc(K from, K to) {
 		return null;
 	}
@@ -246,5 +241,10 @@ public class StraightWGBTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K
 		}
 
 		return values.stream().findFirst().orElse(null);
+	}
+
+	@Override
+	public List<Set<T>> getBetweenAsc(K from, K to) {
+		return GreyGetterStraight.getBetweenAsc(grey, from, to);
 	}
 }

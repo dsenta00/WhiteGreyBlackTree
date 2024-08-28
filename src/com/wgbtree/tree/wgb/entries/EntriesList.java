@@ -34,6 +34,7 @@ public abstract class EntriesList<K extends Comparable<K>, T> implements List<En
 	public abstract EntriesList<K, T> convert(LeakPolicy leakPolicy);
 	public abstract boolean add(@NonNull Entry<K, Set<T>> entry, AtomicReference<Entry<K, Set<T>>> leakedEntry);
 	public abstract int search(K key);
+	public abstract int searchClosest(K key);
 
 	public boolean add(Entry<K, Set<T>> entry) {
 		return add(entry, new AtomicReference<>());
@@ -253,7 +254,8 @@ public abstract class EntriesList<K extends Comparable<K>, T> implements List<En
 
 	@Override
 	public int indexOf(Object o) {
-		throw new UnsupportedOperationException("Not implemented yet.");
+		K key = (K) o;
+		return search(key);
 	}
 
 	@Override

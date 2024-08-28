@@ -182,5 +182,11 @@ public class EntriesTest extends Test {
 		assertEquals(3, entries.get(3).getKey());
 		assertEquals(2, entries.get(4).getKey());
 		assertEquals(1, leakEntry.get().getKey());
+
+		assertEquals(0, entries.searchClosest(6));
+		assertEquals(1, entries.searchClosest(5));
+		assertEquals(2, entries.searchClosest(4));
+		assertEquals(3, entries.searchClosest(3));
+		assertEquals(4, entries.searchClosest(2));
 	}
 }

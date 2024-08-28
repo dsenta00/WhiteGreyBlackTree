@@ -8,20 +8,19 @@ import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.wgbtree.tree.bplus.BPlusTreeMap;
 import com.wgbtree.tree.redblack.TreeMapAsTree;
-import com.wgbtree.tree.wgb.AccWGBTreeMap;
-import com.wgbtree.tree.wgb.MersenneAccWgbTreeMap;
-import com.wgbtree.tree.wgb.MersenneDecWgbTreeMap;
-import com.wgbtree.tree.wgb.WGBPowerTreeMap;
+import com.wgbtree.tree.wgb.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static com.wgbtree.tree.test.Test.measureTime;
+
 public class Main {
 
     private static final Map<String, List<WriteRequest>> batchWriteItemRequests = new HashMap<>();
     private static final List<UpdateItemRequest> updateItemRequests = new ArrayList<>();
-    private static final int MAX_REPEAT = 8;
+    private static final int MAX_REPEAT = 5;
     private static final int MIN_TOTAL_COUNT = 64_000;
     private static final int MAX_TOTAL_COUNT = 1_000_000;
     private static final int DYNAMO_DB_MAX_BATCH_SIZE = 25;
@@ -103,14 +102,11 @@ public class Main {
         createTableIfDoesNotExist("searchMin");
         createTableIfDoesNotExist("searchMax");
         createTableIfDoesNotExist("depth");
+        createTableIfDoesNotExist("searchRange");
     }
 
     public static void deleteTables() {
-        deleteTable("insert");
-        deleteTable("search");
-        deleteTable("searchMin");
-        deleteTable("searchMax");
-        deleteTable("depth");
+        deleteTable("searchRange");
     }
 
     public static void createTableIfDoesNotExist(String operation) {
@@ -191,12 +187,19 @@ public class Main {
                 new BPlusTreeMap<>(150),
                 new BPlusTreeMap<>(200),
                 new BPlusTreeMap<>(300),
+                new BPlusTreeMap<>(600),
 
-                new AccWGBTreeMap<>(100, 97, false),
-                new AccWGBTreeMap<>(150, 97, false),
-                new AccWGBTreeMap<>(200, 97, false),
-                new AccWGBTreeMap<>(300, 97, false),
-                new AccWGBTreeMap<>(600, 97, false),
+                new StraightWGBTreeMap<>(100, false),
+                new StraightWGBTreeMap<>(150, false),
+                new StraightWGBTreeMap<>(200, false),
+                new StraightWGBTreeMap<>(300, false),
+                new StraightWGBTreeMap<>(600, false),
+
+                new AccWGBTreeMap<>(100, 2, false),
+                new AccWGBTreeMap<>(150, 2, false),
+                new AccWGBTreeMap<>(200, 2, false),
+                new AccWGBTreeMap<>(300, 2, false),
+                new AccWGBTreeMap<>(600, 2, false),
 
                 new AccWGBTreeMap<>(100, 199, false),
                 new AccWGBTreeMap<>(150, 199, false),
@@ -216,30 +219,6 @@ public class Main {
                 new AccWGBTreeMap<>(300, 8191, false),
                 new AccWGBTreeMap<>(600, 8191, false),
 
-                new MersenneAccWgbTreeMap<>(100, 2, false),
-                new MersenneAccWgbTreeMap<>(150, 2, false),
-                new MersenneAccWgbTreeMap<>(200, 2, false),
-                new MersenneAccWgbTreeMap<>(300, 2, false),
-                new MersenneAccWgbTreeMap<>(600, 2, false),
-
-                new MersenneAccWgbTreeMap<>(100, 3, false),
-                new MersenneAccWgbTreeMap<>(150, 3, false),
-                new MersenneAccWgbTreeMap<>(200, 3, false),
-                new MersenneAccWgbTreeMap<>(300, 3, false),
-                new MersenneAccWgbTreeMap<>(600, 3, false),
-
-                new MersenneAccWgbTreeMap<>(100, 5, false),
-                new MersenneAccWgbTreeMap<>(150, 5, false),
-                new MersenneAccWgbTreeMap<>(200, 5, false),
-                new MersenneAccWgbTreeMap<>(300, 5, false),
-                new MersenneAccWgbTreeMap<>(600, 5, false),
-
-                new MersenneAccWgbTreeMap<>(100, 7, false),
-                new MersenneAccWgbTreeMap<>(150, 7, false),
-                new MersenneAccWgbTreeMap<>(200, 7, false),
-                new MersenneAccWgbTreeMap<>(300, 7, false),
-                new MersenneAccWgbTreeMap<>(600, 7, false),
-
                 new MersenneAccWgbTreeMap<>(100, 13, false),
                 new MersenneAccWgbTreeMap<>(150, 13, false),
                 new MersenneAccWgbTreeMap<>(200, 13, false),
@@ -251,72 +230,6 @@ public class Main {
                 new MersenneDecWgbTreeMap<>(200, 13, false),
                 new MersenneDecWgbTreeMap<>(300, 13, false),
                 new MersenneDecWgbTreeMap<>(600, 13, false),
-
-                new MersenneDecWgbTreeMap<>(100, 7, false),
-                new MersenneDecWgbTreeMap<>(150, 7, false),
-                new MersenneDecWgbTreeMap<>(200, 7, false),
-                new MersenneDecWgbTreeMap<>(300, 7, false),
-                new MersenneDecWgbTreeMap<>(600, 7, false),
-
-                new MersenneDecWgbTreeMap<>(100, 5, false),
-                new MersenneDecWgbTreeMap<>(150, 5, false),
-                new MersenneDecWgbTreeMap<>(200, 5, false),
-                new MersenneDecWgbTreeMap<>(300, 5, false),
-                new MersenneDecWgbTreeMap<>(600, 5, false),
-
-                new MersenneDecWgbTreeMap<>(100, 3, false),
-                new MersenneDecWgbTreeMap<>(150, 3, false),
-                new MersenneDecWgbTreeMap<>(200, 3, false),
-                new MersenneDecWgbTreeMap<>(300, 3, false),
-                new MersenneDecWgbTreeMap<>(600, 3, false),
-
-                new MersenneDecWgbTreeMap<>(100, 2, false),
-                new MersenneDecWgbTreeMap<>(150, 2, false),
-                new MersenneDecWgbTreeMap<>(200, 2, false),
-                new MersenneDecWgbTreeMap<>(300, 2, false),
-                new MersenneDecWgbTreeMap<>(600, 2, false),
-
-                new WGBPowerTreeMap<>(100, 2, false),
-                new WGBPowerTreeMap<>(150, 2, false),
-                new WGBPowerTreeMap<>(200, 2, false),
-                new WGBPowerTreeMap<>(300, 2, false),
-                new WGBPowerTreeMap<>(600, 2, false),
-
-                new WGBPowerTreeMap<>(100, 3, false),
-                new WGBPowerTreeMap<>(150, 3, false),
-                new WGBPowerTreeMap<>(200, 3, false),
-                new WGBPowerTreeMap<>(300, 3, false),
-                new WGBPowerTreeMap<>(600, 3, false),
-
-                new WGBPowerTreeMap<>(100, 5, false),
-                new WGBPowerTreeMap<>(150, 5, false),
-                new WGBPowerTreeMap<>(200, 5, false),
-                new WGBPowerTreeMap<>(300, 5, false),
-                new WGBPowerTreeMap<>(600, 5, false),
-
-                new WGBPowerTreeMap<>(100, 4, false),
-                new WGBPowerTreeMap<>(150, 4, false),
-                new WGBPowerTreeMap<>(200, 4, false),
-                new WGBPowerTreeMap<>(300, 4, false),
-                new WGBPowerTreeMap<>(600, 4, false),
-
-                new WGBPowerTreeMap<>(100, 6, false),
-                new WGBPowerTreeMap<>(150, 6, false),
-                new WGBPowerTreeMap<>(200, 6, false),
-                new WGBPowerTreeMap<>(300, 6, false),
-                new WGBPowerTreeMap<>(600, 6, false),
-
-                new WGBPowerTreeMap<>(100, 7, false),
-                new WGBPowerTreeMap<>(150, 7, false),
-                new WGBPowerTreeMap<>(200, 7, false),
-                new WGBPowerTreeMap<>(300, 7, false),
-                new WGBPowerTreeMap<>(600, 7, false),
-
-                new WGBPowerTreeMap<>(100, 8, false),
-                new WGBPowerTreeMap<>(150, 8, false),
-                new WGBPowerTreeMap<>(200, 8, false),
-                new WGBPowerTreeMap<>(300, 8, false),
-                new WGBPowerTreeMap<>(600, 8, false),
 
                 new WGBPowerTreeMap<>(100, 9, false),
                 new WGBPowerTreeMap<>(150, 9, false),
@@ -361,6 +274,7 @@ public class Main {
                 tree.getMin();
                 tree.getMax();
                 tree.depth();
+                tree.getBetweenAsc("30000000-0000-0000-0000-000000000000", "40000000-0000-0000-0000-000000000000");
             }
             tree.clear();
         });
@@ -419,6 +333,10 @@ public class Main {
 
                         writeToTable("depth", count + calculatingGroupSize, tree.getName(), depth);
 
+                        long searchRangeTime = measureTime(() -> tree.getBetweenAsc("30000000-0000-0000-0000-000000000000", "40000000-0000-0000-0000-000000000000"));
+
+                        writeToTable("searchRange", count + calculatingGroupSize, tree.getName(), searchRangeTime);
+
                         if (count % 1_000 == 0) {
                             System.gc();
                         }
@@ -432,11 +350,5 @@ public class Main {
                 System.gc();
             });
         }
-    }
-
-    public static long measureTime(Runnable runnable) {
-        long startTime = System.nanoTime();
-        runnable.run();
-        return System.nanoTime() - startTime;
     }
 }

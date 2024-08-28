@@ -14,4 +14,10 @@ public abstract class Test {
 	static String toString(Object obj) {
 		return obj == null ? "null" : obj.toString();
 	}
+
+	public static long measureTime(Runnable runnable) {
+		long startTime = System.nanoTime();
+		runnable.run();
+		return System.nanoTime() - startTime;
+	}
 }

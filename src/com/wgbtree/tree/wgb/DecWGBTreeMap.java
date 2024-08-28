@@ -127,7 +127,7 @@ public class DecWGBTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K, T> 
 
 	@Override
 	public List<Set<T>> getBetweenAsc(K from, K to) {
-		return null;
+		return GreyGetterDec.getBetweenAsc(grey, from, to);
 	}
 
 	@Override

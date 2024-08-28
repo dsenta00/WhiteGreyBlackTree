@@ -5,7 +5,6 @@ import lombok.NoArgsConstructor;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.wgbtree.tree.Main.measureTime;
 import static com.wgbtree.tree.wgb.calculator.MersenneCalculator.mod;
 
 @NoArgsConstructor

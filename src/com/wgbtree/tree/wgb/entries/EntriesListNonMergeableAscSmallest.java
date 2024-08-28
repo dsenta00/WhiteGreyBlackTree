@@ -2,8 +2,8 @@ package com.wgbtree.tree.wgb.entries;
 
 import com.wgbtree.tree.wgb.constants.LeakPolicy;
 import com.wgbtree.tree.wgb.handler.EntrySearcher;
+import com.wgbtree.tree.wgb.utils.InsertionSort;
 
-import java.util.Arrays;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
@@ -42,11 +42,11 @@ public class EntriesListNonMergeableAscSmallest<K extends Comparable<K>, T> exte
 		} else {
 			if (size >= array.length) {
 				handleLeakOfFirstEntryAsc(entry, leakedEntry);
+				InsertionSort.sortAscFromFront(array, size);
 			} else {
 				array[size++] = entry;
+				InsertionSort.sortAscFromBack(array, size);
 			}
-
-			Arrays.sort(array, 0, size, Entry.comparingByKey());
 		}
 		return true;
 	}
@@ -54,5 +54,10 @@ public class EntriesListNonMergeableAscSmallest<K extends Comparable<K>, T> exte
 	@Override
 	public int search(K key) {
 		return EntrySearcher.searchAsc(array, key, size);
+	}
+
+	@Override
+	public int searchClosest(K key) {
+		return EntrySearcher.searchClosestAsc(array, key, size);
 	}
 }

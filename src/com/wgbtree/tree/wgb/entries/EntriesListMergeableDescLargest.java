@@ -2,6 +2,7 @@ package com.wgbtree.tree.wgb.entries;
 
 import com.wgbtree.tree.wgb.constants.LeakPolicy;
 import com.wgbtree.tree.wgb.handler.EntrySearcher;
+import com.wgbtree.tree.wgb.utils.InsertionSort;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -39,11 +40,11 @@ public class EntriesListMergeableDescLargest<K extends Comparable<K>, T> extends
 		} else {
 			if (size >= array.length) {
 				handleLeakOfFirstEntryDesc(entry, leakedEntry);
+				InsertionSort.sortDescFromFront(array, size);
 			} else {
 				array[size++] = entry;
+				InsertionSort.sortDescFromBack(array, size);
 			}
-
-			Arrays.sort(array, 0, size, Map.Entry.comparingByKey(Comparator.reverseOrder()));
 		}
 		return true;
 	}
@@ -51,5 +52,10 @@ public class EntriesListMergeableDescLargest<K extends Comparable<K>, T> extends
 	@Override
 	public int search(K key) {
 		return EntrySearcher.searchDesc(array, key, size);
+	}
+
+	@Override
+	public int searchClosest(K key) {
+		return EntrySearcher.searchClosestDesc(array, key, size);
 	}
 }
