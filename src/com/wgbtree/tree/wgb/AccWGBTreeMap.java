@@ -89,12 +89,12 @@ public class AccWGBTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K, T> 
 	}
 
 	@Override
-	public List<Set<T>> getAllAsc() {
+	public List<Entry<K, Set<T>>> getAllAsc() {
 		return GreyGetterAcc.getAllAsc(grey);
 	}
 
 	@Override
-	public List<Set<T>> getAllDesc() {
+	public List<Entry<K, Set<T>>> getAllDesc() {
 		return GreyGetterAcc.getAllDesc(grey);
 	}
 
@@ -125,7 +125,7 @@ public class AccWGBTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K, T> 
 	}
 
 	@Override
-	public List<Set<T>> getBetweenAsc(K from, K to) {
+	public List<Entry<K, Set<T>>> getBetweenAsc(K from, K to) {
 		return GreyHandler.getBetweenAsc(grey, from, to);
 	}
 

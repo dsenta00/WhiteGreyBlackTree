@@ -9,13 +9,13 @@ public interface AsTree<K extends Comparable<K>, T> extends Map<K, T> {
     K getMax();
     int depth();
     String getName();
-    List<Set<T>> getAllAsc();
-    List<Set<T>> getAllDesc();
+    List<Entry<K, Set<T>>> getAllAsc();
+    List<Entry<K, Set<T>>> getAllDesc();
     List<Set<T>> getInAsc(List<K> keys);
     List<Set<T>> getInDesc(List<K> keys);
     List<Set<T>> getNotInAsc(List<K> keys);
     List<Set<T>> getNotInDesc(List<K> keys);
-    List<Set<T>> getBetweenAsc(K from, K to);
+    List<Entry<K, Set<T>>> getBetweenAsc(K from, K to);
     List<Set<T>> getBetweenDesc(K from, K to);
     List<Set<T>> getBetweenAscInclusive(K from, K to);
     List<Set<T>> getBetweenDescInclusive(K from, K to);

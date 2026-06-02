@@ -14,6 +14,8 @@ import com.wgbtree.tree.wgb.operations.delete.dec.GreyRemoverDec;
 import com.wgbtree.tree.wgb.operations.delete.mersenne.BlackRemoverMersenne;
 import com.wgbtree.tree.wgb.operations.delete.mersenne.GreyRemoverMersenne;
 import com.wgbtree.tree.wgb.operations.delete.power.BlackRemoverPower;
+import com.wgbtree.tree.wgb.operations.delete.range.BlackRemoverRange;
+import com.wgbtree.tree.wgb.operations.delete.range.GreyRemoverRange;
 import com.wgbtree.tree.wgb.operations.delete.straight.GreyRemoverStraight;
 
 import java.util.AbstractMap.SimpleEntry;
@@ -26,7 +28,7 @@ import java.util.stream.IntStream;
 public class WhiteGreyBlackTreeMapTest extends Test {
 
 	final static int TOTAL_WEIGHT = 1_000_000;
-	final static int TEST_CAPACITY = 6000;
+	final static int TEST_CAPACITY = 128_000;
 	final static int TEST_ORDER = 5;
 
 	public static void main(String[] args) {
@@ -37,44 +39,56 @@ public class WhiteGreyBlackTreeMapTest extends Test {
 		testGetBetweenAsc(new MersenneDecWgbTreeMap<>(TEST_ORDER, 5, true));
 		testGetBetweenAsc(new AccWGBTreeMap<>(TEST_ORDER, 2, true));
 		testGetBetweenAsc(new StraightWGBTreeMap<>(TEST_ORDER, true));
+		testGetBetweenAsc(new RangeWGBTreeMap<>(TEST_ORDER, true));
 		testGetBetweenAsc(new WGBPowerTreeMap<>(TEST_ORDER, 8, true));
 		testGetBetweenAsc(new DecWGBTreeMap<>(25, TEST_ORDER, false, true));
+		testGetBetweenAsc(new FwMersenneAccWgbTreeMap<>(TEST_ORDER));
+		testGetBetweenAsc(new FwMersenneDecWgbTreeMap<>(TEST_ORDER));
 
 		testRemoveMinFromBlack(BlackRemoverPower::removeMin);
 		testRemoveMinFromBlack(BlackRemoverAcc::removeMin);
 		testRemoveMinFromBlack(BlackRemoverDec::removeMin);
 		testRemoveMinFromBlack(BlackRemoverMersenne::removeMin);
+		testRemoveMinFromBlack(BlackRemoverRange::removeMax);
 
 		testRemoveMin(GreyRemoverDec::removeMin, false);
 		testRemoveMin(GreyRemoverDec::removeMin, true);
 		testRemoveMin(GreyRemoverStraight::removeMin, true);
 		testRemoveMin(GreyRemoverMersenne::removeMin, false);
 		testRemoveMin(GreyRemoverMersenne::removeMin, true);
+		testRemoveMin(GreyRemoverRange::removeMin, false);
 
 		testRemoveMax(GreyRemoverDec::removeMax, false);
 		testRemoveMax(GreyRemoverDec::removeMax, true);
 		testRemoveMax(GreyRemoverStraight::removeMax, true);
 		testRemoveMax(GreyRemoverMersenne::removeMax, false);
 		testRemoveMax(GreyRemoverMersenne::removeMax, true);
+		testRemoveMax(GreyRemoverRange::removeMax, false);
 
 		testInsert(new MersenneAccWgbTreeMap<>(TEST_ORDER, 5, true));
 		testInsert(new MersenneDecWgbTreeMap<>(TEST_ORDER, 5, true));
 		testInsert(new AccWGBTreeMap<>(TEST_ORDER, 2, true));
 		testInsert(new StraightWGBTreeMap<>(TEST_ORDER, true));
+		testInsert(new RangeWGBTreeMap<>(TEST_ORDER, true));
 		testInsert(new WGBPowerTreeMap<>(TEST_ORDER, 8, true));
 		testInsert(new DecWGBTreeMap<>(25, TEST_ORDER, false, true));
 
 		testInsertBalance(new AccWGBTreeMap<>(TEST_ORDER, 2, true));
 		testInsertBalance(new DecWGBTreeMap<>(TEST_CAPACITY, TEST_ORDER, false, true));
 		testInsertBalance(new StraightWGBTreeMap<>(TEST_ORDER, true));
+		testInsertBalance(new RangeWGBTreeMap<>(TEST_ORDER, true));
 		testInsertBalance(new WGBPowerTreeMap<>(TEST_ORDER, 8, true));
 
+		testPopulation(new MersenneAccWgbTreeMap<>(1, 13));
 		testPopulation(new MersenneAccWgbTreeMap<>());
+		testPopulation(new FwMersenneAccWgbTreeMap<>());
 		testPopulation(new MersenneDecWgbTreeMap<>());
+		testPopulation(new FwMersenneDecWgbTreeMap<>());
 		testPopulation(new AccWGBTreeMap<>());
 		testPopulation(new AccWGBTreeMap<>(3, 2, true, true));
 		testPopulation(new DecWGBTreeMap<>(TEST_CAPACITY));
 		testPopulation(new StraightWGBTreeMap<>());
+		testPopulation(new RangeWGBTreeMap<>());
 		testPopulation(new WGBPowerTreeMap<>(TEST_ORDER, 8));
 	}
 
@@ -106,15 +120,15 @@ public class WhiteGreyBlackTreeMapTest extends Test {
 		tree.put("y", 25);
 		tree.put("z", 26);
 
-		final List<Set<Integer>> list = tree.getBetweenAsc("d", "j");
+		final List<Entry<String, Set<Integer>>> list = tree.getBetweenAsc("d", "j");
 		System.out.println(tree.getName() + " getBetweenAsc(\"d\", \"j\") -> " + list);
 		assertEquals(6, list.size());
-		IntStream.range(0, 6).forEach(i -> assertEquals(i + 4, list.get(i).stream().findFirst().orElse(null)));
+		IntStream.range(0, 6).forEach(i -> assertEquals(i + 4, list.get(i).getValue().stream().findFirst().orElse(null)));
 
-		final List<Set<Integer>> list2 = tree.getBetweenAsc("a", "z");
+		final List<Entry<String, Set<Integer>>> list2 = tree.getBetweenAsc("a", "z");
 		System.out.println(tree.getName() + " getBetweenAsc(\"a\", \"z\") -> " + list2);
 		assertEquals(25, list2.size());
-		IntStream.range(0, 25).forEach(i -> assertEquals(i + 1, list2.get(i).stream().findFirst().orElse(null)));
+		IntStream.range(0, 25).forEach(i -> assertEquals(i + 1, list2.get(i).getValue().stream().findFirst().orElse(null)));
 	}
 
 	private static void testPopulation(WGBTreeMap<String, Integer> tree) {
@@ -152,7 +166,8 @@ public class WhiteGreyBlackTreeMapTest extends Test {
 		assertEquals(true, result.getEntry() == null);
 	}
 
-	public static void testRemoveMax(Function<Grey<Integer, Integer>, RemoveResult<Integer, Integer>> removeMax, boolean greys) {
+	public static
+	void testRemoveMax(Function<Grey<Integer, Integer>, RemoveResult<Integer, Integer>> removeMax, boolean greys) {
 		var leakEntry = new AtomicReference<Entry<Integer, Set<Integer>>>();
 
 		var grey = new Grey<Integer, Integer>(3, false);
@@ -182,7 +197,8 @@ public class WhiteGreyBlackTreeMapTest extends Test {
 		}
 	}
 
-	public static void testRemoveMin(Function<Grey<Integer, Integer>, RemoveResult<Integer, Integer>> removeMin, boolean greys) {
+	public static
+	void testRemoveMin(Function<Grey<Integer, Integer>, RemoveResult<Integer, Integer>> removeMin, boolean greys) {
 		var leakEntry = new AtomicReference<Entry<Integer, Set<Integer>>>();
 
 		var grey = new Grey<Integer, Integer>(3, false);

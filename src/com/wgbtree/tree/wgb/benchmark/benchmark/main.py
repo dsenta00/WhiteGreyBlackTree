@@ -1,10 +1,38 @@
 import random
+from math import log10
 
 import boto3
 import matplotlib.pyplot as plt
 
-tables = ["insert", "search", "searchMin", "searchMax", "depth", "searchRange"]
-colors = ["red", "blue", "green", "orange", "purple", "brown", "pink", "gray", "olive", "cyan"]
+tables = [
+    "insert",
+    "search",
+    #"searchMin",
+    #"searchMax",
+    "depth",
+    "searchRange"
+]
+
+metric_importance = {
+    "search": 1,
+    "searchRange": 1,
+    "depth": 0,
+    #"searchMin": 0.6,
+    #"searchMax": 0.6,
+    "insert": 0.2
+}
+
+colors = {
+    "blue": [0.0, 0.0, 1.0],
+    "green": [0.0, 1.0, 0.0],
+    "orange": [1.0, 0.5, 0.0],
+    "purple": [0.5, 0.0, 0.5],
+    "brown": [0.5, 0.25, 0.0],
+    "pink": [1.0, 0.0, 1.0],
+    "gray": [0.5, 0.5, 0.5],
+    "olive": [0.5, 0.5, 0.0],
+    "cyan": [0.0, 1.0, 1.0],
+}
 
 dynamodb_client = boto3.client(
     'dynamodb',
@@ -16,41 +44,34 @@ dynamodb_client = boto3.client(
 
 
 def fetch_all_tree_names():
-    data = set()
-
     try:
-        last_evaluated_key = None
-
-        while True:
-            if last_evaluated_key:
-                response = dynamodb_client.scan(
-                    TableName='search',
-                    ExclusiveStartKey=last_evaluated_key  # For pagination
-                )
-            else:
-                response = dynamodb_client.scan(
-                    TableName='search'
-                )
-
-            items = response.get('Items', [])
-            for item in items:
-                data.add(item['tree_name']['S'])
-
-            # Check if there are more items to retrieve
-            last_evaluated_key = response.get('LastEvaluatedKey')
-            if not last_evaluated_key:
-                break
-
-        return list(data)
+        return fetch_distinct_values("insert", "tree_name")
     except Exception as e:
         print(f"Error fetching tree names: {e}")
         return []
 
 
-def print_tree_ranking(min_count, max_count):
-    for table in tables:
-        data = fetch_data_from_table_in_range(table, min_count, max_count)
-        print(f"\t{table.capitalize()} [{min_count}, {max_count}]:")
+def fetch_distinct_values(table_name, attribute_name):
+    paginator = dynamodb_client.get_paginator('scan')
+    response_iterator = paginator.paginate(
+        TableName=table_name,
+        ProjectionExpression=attribute_name
+    )
+
+    distinct_values = set()
+    for page in response_iterator:
+        for item in page['Items']:
+            distinct_values.add(item[attribute_name]['S'])  # Assuming attribute type is String (S)
+
+    return list(distinct_values)
+
+
+def print_stats(_data_per_tables):
+    total_ranking_by_tree = {}
+    total_ranking_by_tree_charac = {}
+
+    for table, data in _data_per_tables:
+        print(f"\t{table.capitalize()}:")
 
         cumulative_data = {}
         cumulative_data_per_charac = {}
@@ -60,9 +81,7 @@ def print_tree_ranking(min_count, max_count):
             count = point['count']
             metric = point['metric']
 
-            if "o:" in _tree_name:
-                _order = "o-" + _tree_name.split("|o:")[1]
-            elif "[o-" in _tree_name:
+            if "[o-" in _tree_name:
                 _order = _tree_name.split("[o-")[1]
                 _order = "o-" + _order.split("]")[0]
             else:
@@ -108,9 +127,21 @@ def print_tree_ranking(min_count, max_count):
             average_metric_by_tree[_tree_name] = average_metric
 
         sorted_trees = sorted(average_metric_by_tree.items(), key=lambda x: x[1])
+        _min = sorted_trees[0][1]
+        longest_tree_name = max([len(_tree_name) for _tree_name, _ in sorted_trees])
 
         for _i, (_tree_name, avg_metric) in enumerate(sorted_trees):
-            print(f"\t\t{_i + 1}. {_tree_name}: {avg_metric:.2f}")
+            if _tree_name not in total_ranking_by_tree_charac:
+                total_ranking_by_tree_charac[_tree_name] = 0
+            relative_metric = avg_metric / _min
+            total_ranking_by_tree_charac[_tree_name] += relative_metric * metric_importance[table]
+
+        for _i, (_tree_name, avg_metric) in enumerate(sorted_trees):
+            padding_len = longest_tree_name - len(_tree_name) + 3
+            padding = "." * padding_len
+            relative_metric = avg_metric / _min
+
+            print(f"\t\t{_i + 1}. {_tree_name} {padding} {avg_metric:.2f} ({relative_metric:.2f})")
 
         print()
         print()
@@ -134,56 +165,116 @@ def print_tree_ranking(min_count, max_count):
             average_metric_by_tree[_tree_name] = average_metric
 
         sorted_trees = sorted(average_metric_by_tree.items(), key=lambda x: x[1])
+        _min = sorted_trees[0][1]
+
+        for _i, (_tree_name, avg_metric) in enumerate(sorted_trees):
+            if _tree_name not in total_ranking_by_tree:
+                total_ranking_by_tree[_tree_name] = 0
+            relative_metric = avg_metric / _min
+            total_ranking_by_tree[_tree_name] += relative_metric * metric_importance[table]
+
+        longest_tree_name = max([len(_tree_name) for _tree_name, _ in sorted_trees])
 
         print(f"\tTop 10 trees:")
         for _i, (_tree_name, avg_metric) in enumerate(sorted_trees):
             if _i == 10:
                 break
-            print(f"\t\t{_i + 1}. {_tree_name}: {avg_metric:.2f}")
+
+            padding_len = longest_tree_name - len(_tree_name) + 3
+            padding = "." * padding_len
+
+            print(f"\t\t{_i + 1}. {_tree_name} {padding} {avg_metric:.2f} ({avg_metric / _min:.2f})")
 
         print("\tWorst 10 trees:")
         for _i, (_tree_name, avg_metric) in enumerate(reversed(sorted_trees)):
             if _i == 10:
                 break
-            print(f"\t\t{_i + 1}. {_tree_name}: {avg_metric:.2f}")
+
+            padding_len = longest_tree_name - len(_tree_name) + 3
+            padding = "." * padding_len
+            print(f"\t\t{_i + 1}. {_tree_name} {padding} {avg_metric:.2f} ({avg_metric / _min:.2f})")
 
         print()
 
+    print("\tTotal ranking by tree:")
+    sorted_trees = sorted(total_ranking_by_tree.items(), key=lambda x: x[1])
+    _min = sorted_trees[0][1]
+    longest_tree_name = max([len(_tree_name) for _tree_name, _ in sorted_trees])
 
-def fetch_data_from_table_in_range(table_name, min_count, max_count):
+    for _i, (_tree_name, avg_metric) in enumerate(sorted_trees):
+        padding_len = longest_tree_name - len(_tree_name) + 3
+        padding = "." * padding_len
+        print(f"\t\t{_i + 1}. {_tree_name} {padding} {avg_metric:.2f} ({avg_metric / _min:.2f})")
+
+    print()
+
+    print("\tTotal ranking by tree characteristic:")
+    sorted_trees = sorted(total_ranking_by_tree_charac.items(), key=lambda x: x[1])
+    _min = sorted_trees[0][1]
+    longest_tree_name = max([len(_tree_name) for _tree_name, _ in sorted_trees])
+
+    for _i, (_tree_name, avg_metric) in enumerate(sorted_trees):
+        padding_len = longest_tree_name - len(_tree_name) + 3
+        padding = "." * padding_len
+        print(f"\t\t{_i + 1}. {_tree_name} {padding} {avg_metric:.2f} ({avg_metric / _min:.2f})")
+
+    print()
+
+
+def fetch_data_from_table_in_range(table_name, _min_count = None, _max_count = None):
     try:
+        print(f" > Fetching {table_name} ...")
         last_evaluated_key = None
         data = []
 
         for _tree_name in selected_tree_names:
             while True:
                 if last_evaluated_key:
-                    response = dynamodb_client.query(
-                        TableName=table_name,
-                        KeyConditionExpression='tree_name = :tree_name AND #count BETWEEN :lower AND :upper',
-                        ExpressionAttributeNames={
-                            '#count': 'count'
-                        },
-                        ExpressionAttributeValues={
-                            ':tree_name': {'S': _tree_name},  # Partition key must be included
-                            ':lower': {'N': str(min_count)},  # Sort key range lower bound
-                            ':upper': {'N': str(max_count)}  # Sort key range upper bound
-                        },
-                        ExclusiveStartKey=last_evaluated_key  # For pagination
-                    )
+                    if _min_count is None and _max_count is None:
+                        response = dynamodb_client.query(
+                            TableName=table_name,
+                            KeyConditionExpression='tree_name = :tree_name',
+                            ExpressionAttributeValues={
+                                ':tree_name': {'S': _tree_name},
+                            },
+                            ExclusiveStartKey=last_evaluated_key
+                        )
+                    else:
+                        response = dynamodb_client.query(
+                            TableName=table_name,
+                            KeyConditionExpression='tree_name = :tree_name AND #count BETWEEN :lower AND :upper',
+                            ExpressionAttributeNames={
+                                '#count': 'count'
+                            },
+                            ExpressionAttributeValues={
+                                ':tree_name': {'S': _tree_name},
+                                ':lower': {'N': str(_min_count)},
+                                ':upper': {'N': str(_max_count)}
+                            },
+                            ExclusiveStartKey=last_evaluated_key
+                        )
                 else:
-                    response = dynamodb_client.query(
-                        TableName=table_name,
-                        KeyConditionExpression='tree_name = :tree_name AND #count BETWEEN :lower AND :upper',
-                        ExpressionAttributeNames={
-                            '#count': 'count'
-                        },
-                        ExpressionAttributeValues={
-                            ':tree_name': {'S': _tree_name},  # Partition key must be included
-                            ':lower': {'N': str(min_count)},  # Sort key range lower bound
-                            ':upper': {'N': str(max_count)}  # Sort key range upper bound
-                        },
-                    )
+                    if _min_count is None and _max_count is None:
+                        response = dynamodb_client.query(
+                            TableName=table_name,
+                            KeyConditionExpression='tree_name = :tree_name',
+                            ExpressionAttributeValues={
+                                ':tree_name': {'S': _tree_name},
+                            }
+                        )
+                    else:
+                        response = dynamodb_client.query(
+                            TableName=table_name,
+                            KeyConditionExpression='tree_name = :tree_name AND #count BETWEEN :lower AND :upper',
+                            ExpressionAttributeNames={
+                                '#count': 'count'
+                            },
+                            ExpressionAttributeValues={
+                                ':tree_name': {'S': _tree_name},
+                                ':lower': {'N': str(_min_count)},
+                                ':upper': {'N': str(_max_count)}
+                            },
+                        )
 
                 items = response.get('Items', [])
                 for item in items:
@@ -193,10 +284,9 @@ def fetch_data_from_table_in_range(table_name, min_count, max_count):
                         'tree_name': item['tree_name']['S']
                     })
 
-                # Check if there are more items to retrieve
                 last_evaluated_key = response.get('LastEvaluatedKey')
                 if not last_evaluated_key:
-                    break  # No more items to retrieve
+                    break
 
         return data
 
@@ -205,46 +295,33 @@ def fetch_data_from_table_in_range(table_name, min_count, max_count):
         return []
 
 
-def resolve_tree_color(tree_name):
-    # Default color (in case the name doesn't match any pattern)
+def resolve_tree_color(_tree_name):
     color = "black"
 
-    # Miami-style neon colors for "b+" trees
-    if "b+" in tree_name:
-        order = int(tree_name.split("|o:")[1])
-        # Darker, fluorescent yellow scaling to a richer tone
+    if "b+" in _tree_name:
+        order = int(_tree_name.split("|o:")[1])
         brightness = min(1.0, max(0.0, float(order - 100) / 200))
         color = (0.9 * brightness, 0.9 * brightness, 0.0 + 0.4 * brightness)  # Darker yellow with richer neon
-
-    # Miami-style neon for "wgb" trees
-    elif "wgb" in tree_name:
-        parts = tree_name.split("[")
-        g_mers_dec = parts[1].replace(']', '')
+    elif "wgb" in _tree_name:
+        parts = _tree_name.split("[")
+        wgb_type = parts[1].replace(']', '')
         order = int(parts[2].split('-')[1][:-1])
         ranking = int(parts[3].split('-')[1][:-1])
 
-        # Random darker neon base color for g_mers_dec
-        random.seed(hash(g_mers_dec))
-        base_color = [random.random() * 0.6 for _ in range(3)]  # Scaling down for darker tones
-
-        # Adjust the blue and red channels based on order and ranking for richer tones
-        base_color[2] = min(1.0, max(0.0, base_color[2] + float(order) / 400))  # Richer blue
-        base_color[0] = min(1.0, max(0.0, base_color[0] + float(ranking) / 100))  # Richer red
+        random.seed(wgb_type)
+        base_color = colors[random.choice(list(colors.keys()))]
+        base_color[0] = min(1.0, max(0.0, (float(ranking) / 8192)))
+        base_color[2] = min(1.0, max(0.0, (float(order) / 600)))
 
         color = tuple(base_color)
-
-    # Miami-style cyan for "RB" trees
-    elif "RB" in tree_name:
-        color = (0.0, 0.8, 0.8)  # Richer, darker cyan
+    elif "RB" in _tree_name:
+        color = "red"
 
     return color
 
 
-def plot_graph_range(min_count, max_count):
-    for table in tables:
-        data = fetch_data_from_table_in_range(table, min_count, max_count)
-
-        # Group data by tree_name
+def plot_graph_range(_data_per_tables):
+    for table, data in _data_per_tables:
         grouped_data = {}
         for point in data:
             if point['tree_name'] not in grouped_data:
@@ -252,7 +329,7 @@ def plot_graph_range(min_count, max_count):
             grouped_data[point['tree_name']]['count'].append(point['count'])
             grouped_data[point['tree_name']]['metric'].append(point['metric'])
 
-        plt.figure(figsize=(20, 12), facecolor='black')  # Larger window with black background
+        plt.figure(figsize=(20, 12), facecolor='black')
         ax = plt.gca()
         ax.set_facecolor('black')
 
@@ -264,27 +341,25 @@ def plot_graph_range(min_count, max_count):
             plt.text(points['count'][-1], points['metric'][-1], _tree_name, color=color, fontsize=12, va='center',
                      ha='left')
 
-        plt.title(f'{table.capitalize()} Operation Metrics', color='white')  # Title in white
-        plt.xlabel('Count', color='white')  # X-axis label in white
-        plt.ylabel('Metric', color='white')  # Y-axis label in white
+        plt.title(f'{table.capitalize()} Operation Metrics', color='white')
+        plt.xlabel('Count', color='white')
+        plt.ylabel('Metric', color='white')
 
-        # Adjust the graph position to provide space for text labels on the right
-        plt.subplots_adjust(left=0.1, right=0.9)  # Move the graph to the left
+        plt.subplots_adjust(left=0.1, right=0.9)
 
-        plt.grid(True, color='gray', linestyle='--', alpha=0.6)  # Subdued grid lines
+        plt.grid(True, color='gray', linestyle='--', alpha=0.6)
 
-        # Minimalistic approach by removing top and right borders
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
         ax.spines['left'].set_color('white')
         ax.spines['bottom'].set_color('white')
-        ax.tick_params(axis='x', colors='white')  # X-axis ticks in white
-        ax.tick_params(axis='y', colors='white')  # Y-axis ticks in white
+        ax.tick_params(axis='x', colors='white')
+        ax.tick_params(axis='y', colors='white')
 
         plt.show()
 
 
-print(" Fetching trees...")
+print(" > Fetching trees ...")
 tree_names = fetch_all_tree_names()
 selected_tree_names = set()
 to_print = True
@@ -327,18 +402,28 @@ while True:
             else:
                 for tree_name in tree_names:
                     if selection in tree_name:
-                        selected_tree_names.remove(tree_name)
+                        try:
+                            selected_tree_names.remove(tree_name)
+                        except KeyError:
+                            pass
         elif command == "list":
             for idx, tree_name in enumerate(selected_tree_names):
                 print(f"\t{idx + 1}. {tree_name}")
+            to_print = False
+        elif command == "plot":
+            print("Fetching data and plotting graphs...")
+            data_per_tables = [(table, fetch_data_from_table_in_range(table)) for table in tables]
+            print_stats(data_per_tables)
+            plot_graph_range(data_per_tables)
             to_print = False
         elif command.startswith("plot"):
             print("Fetching data and plotting graphs...")
             selected_tree_names = list(selected_tree_names)
             min_count = int(command.split("plot ")[1].split(" ")[0])
             max_count = int(command.split("plot ")[1].split(" ")[1])
-            print_tree_ranking(min_count, max_count)
-            plot_graph_range(min_count, max_count)
+            data_per_tables = [(table, fetch_data_from_table_in_range(table, min_count, max_count)) for table in tables]
+            print_stats(data_per_tables)
+            plot_graph_range(data_per_tables)
             to_print = False
             continue
         elif command == "help":
@@ -352,4 +437,3 @@ while True:
             print("Invalid command. Type 'help' for a list of commands.")
             to_print = False
             continue
-

@@ -12,15 +12,11 @@ public abstract class HeapTree<K extends Comparable<K>, T> {
 	public abstract void push(Entry<K, Set<T>> entry);
 	public abstract Entry<K, Set<T>> pop();
 
-	public List<Set<T>> popAll() {
-		List<Set<T>> list = new LinkedList<>();
+	public List<Entry<K, Set<T>>> popAll() {
+		List<Entry<K, Set<T>>> list = new LinkedList<>();
 
-		while (true) {
-			Entry<K, Set<T>> entry = pop();
-			if (entry == null) {
-				break;
-			}
-			list.add(entry.getValue());
+		for (Entry<K, Set<T>> entry = pop(); entry != null; entry = pop()) {
+			list.add(entry);
 		}
 
 		return list;

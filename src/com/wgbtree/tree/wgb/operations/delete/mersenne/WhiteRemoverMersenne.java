@@ -4,7 +4,6 @@ import com.wgbtree.tree.wgb.calculator.MersenneCalculator;
 import com.wgbtree.tree.wgb.model.node.grey.Grey;
 import com.wgbtree.tree.wgb.model.node.white.White;
 import com.wgbtree.tree.wgb.model.result.RemoveResult;
-import com.wgbtree.tree.wgb.operations.get.dec.GreyGetterDec;
 import com.wgbtree.tree.wgb.operations.get.mersenne.GreyGetterMersenne;
 import com.wgbtree.tree.wgb.prime.Primes;
 import lombok.NoArgsConstructor;
@@ -67,7 +66,7 @@ public final class WhiteRemoverMersenne {
 			return RemoveResult.empty();
 		}
 
-		var maxResult = GreyGetterDec.getMax(white.getGreys());
+		var maxResult = GreyGetterMersenne.getMax(white.getGreys());
 		Map.Entry<K, Set<T>> removedEntry = null;
 		if (maxResult.isEmpty()) {
 			// No grey nodes, remove maximum from the white node

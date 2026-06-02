@@ -89,13 +89,13 @@ public class MersenneDecWgbTreeMap<K extends Comparable<K>, T> extends WGBTreeMa
 	}
 
 	@Override
-	public List<Set<T>> getAllAsc() {
-		return GreyGetterDec.getAllAsc(grey);
+	public List<Entry<K, Set<T>>> getAllAsc() {
+		return GreyGetterMersenne.getAllAsc(grey);
 	}
 
 	@Override
-	public List<Set<T>> getAllDesc() {
-		return GreyGetterDec.getAllDesc(grey);
+	public List<Entry<K, Set<T>>> getAllDesc() {
+		return GreyGetterMersenne.getAllDesc(grey);
 	}
 
 	@Override
@@ -125,7 +125,7 @@ public class MersenneDecWgbTreeMap<K extends Comparable<K>, T> extends WGBTreeMa
 	}
 
 	@Override
-	public List<Set<T>> getBetweenAsc(K from, K to) {
+	public List<Entry<K, Set<T>>> getBetweenAsc(K from, K to) {
 		return GreyGetterMersenne.getBetweenAsc(grey, from, to);
 	}
 

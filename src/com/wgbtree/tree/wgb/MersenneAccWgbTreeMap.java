@@ -2,7 +2,6 @@ package com.wgbtree.tree.wgb;
 
 import com.wgbtree.tree.AsTree;
 import com.wgbtree.tree.wgb.creator.TreeConfigCreator;
-import com.wgbtree.tree.wgb.handler.GreyHandler;
 import com.wgbtree.tree.wgb.operations.delete.mersenne.GreyRemoverMersenne;
 import com.wgbtree.tree.wgb.operations.get.dec.GreyGetterDec;
 import com.wgbtree.tree.wgb.operations.get.mersenne.GreyGetterMersenne;
@@ -12,7 +11,8 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.wgbtree.tree.wgb.assertion.AssertionTreeConfig.*;
+import static com.wgbtree.tree.wgb.assertion.AssertionTreeConfig.assertMersenneExp;
+import static com.wgbtree.tree.wgb.assertion.AssertionTreeConfig.assertOrder;
 import static com.wgbtree.tree.wgb.constants.Constants.*;
 import static com.wgbtree.tree.wgb.model.info.GrowthMode.MERSENNE_ACCELERATING;
 import static com.wgbtree.tree.wgb.prime.Primes.FIRST_MERSENNE_EXP;
@@ -89,13 +89,13 @@ public class MersenneAccWgbTreeMap <K extends Comparable<K>, T> extends WGBTreeM
 	}
 
 	@Override
-	public List<Set<T>> getAllAsc() {
-		return GreyGetterDec.getAllAsc(grey);
+	public List<Entry<K, Set<T>>>  getAllAsc() {
+		return GreyGetterMersenne.getAllAsc(grey);
 	}
 
 	@Override
-	public List<Set<T>> getAllDesc() {
-		return GreyGetterDec.getAllDesc(grey);
+	public List<Entry<K, Set<T>>>  getAllDesc() {
+		return GreyGetterMersenne.getAllDesc(grey);
 	}
 
 	@Override
@@ -125,8 +125,8 @@ public class MersenneAccWgbTreeMap <K extends Comparable<K>, T> extends WGBTreeM
 	}
 
 	@Override
-	public List<Set<T>> getBetweenAsc(K from, K to) {
-		return GreyHandler.getBetweenAsc(grey, from, to);
+	public List<Entry<K, Set<T>>> getBetweenAsc(K from, K to) {
+		return GreyGetterMersenne.getBetweenAsc(grey, from, to);
 	}
 
 	@Override

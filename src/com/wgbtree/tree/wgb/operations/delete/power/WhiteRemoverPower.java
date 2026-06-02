@@ -5,7 +5,7 @@ import com.wgbtree.tree.wgb.model.node.white.White;
 import com.wgbtree.tree.wgb.model.result.RemoveResult;
 import com.wgbtree.tree.wgb.operations.delete.acc.GreyRemoverAcc;
 import com.wgbtree.tree.wgb.operations.get.dec.GreyGetterDec;
-import com.wgbtree.tree.wgb.operations.get.mersenne.GreyGetterMersenne;
+import com.wgbtree.tree.wgb.operations.get.power.GreyGetterPower;
 import lombok.NoArgsConstructor;
 
 import java.util.Map;
@@ -112,7 +112,7 @@ public final class WhiteRemoverPower {
 	void suckMinFromGreyNodes(White<K, T> white) {
 		var greys = white.getGreys();
 
-		var minResult = GreyGetterMersenne.getMin(greys);
+		var minResult = GreyGetterPower.getMin(greys);
 		if (minResult.isEmpty()) {
 			return;
 		}

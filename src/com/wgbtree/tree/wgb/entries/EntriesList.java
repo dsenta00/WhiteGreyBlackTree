@@ -13,13 +13,18 @@ public abstract class EntriesList<K extends Comparable<K>, T> implements List<En
 	protected int size;
 
 	public EntriesList(int capacityLimit) {
-		this.array = (Entry<K, Set<T>>[]) new Entry<?, ?>[capacityLimit];
+		this.array = capacityLimit > 0 ? (Entry<K, Set<T>>[]) new Entry<?, ?>[capacityLimit] : null;
 		this.size = 0;
 	}
 
 	protected EntriesList(EntriesList<K, T> entriesList) {
 		this.array = entriesList.array;
 		this.size = entriesList.size;
+	}
+
+	public static <K extends Comparable<K>, T>
+	EntriesList<K, T> empty() {
+		return new EntriesListEmpty<>();
 	}
 
 	public Entry<K, Set<T>> firstEntry() {

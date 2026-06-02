@@ -1,12 +1,14 @@
 package com.wgbtree.tree.wgb.operations.get.power;
 
 import com.wgbtree.tree.heap.MaxHeapTree;
-import com.wgbtree.tree.heap.MinHeapTree;
+import com.wgbtree.tree.wgb.handler.EntryHandler;
 import com.wgbtree.tree.wgb.model.node.white.White;
 import com.wgbtree.tree.wgb.operations.get.acc.GreyGetterAcc;
+import com.wgbtree.tree.wgb.operations.get.range.GreyGetterRange;
 import lombok.NoArgsConstructor;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 import static java.util.Objects.isNull;
 import static lombok.AccessLevel.PRIVATE;
@@ -14,100 +16,64 @@ import static lombok.AccessLevel.PRIVATE;
 @NoArgsConstructor(access = PRIVATE)
 public final class WhiteGetterPower {
 
-	public static <K extends Comparable<K>, T>
-	Map.Entry<K, Set<T>> getMin(White<K, T> white) {
-		if (isNull(white) || white.getEntries().isEmpty()) {
-			return null;
-		}
+    public static <K extends Comparable<K>, T>
+    Entry<K, Set<T>> getMin(White<K, T> white) {
+        if (isNull(white) || white.getEntries().isEmpty()) {
+            return null;
+        }
 
-		return white.getEntries().firstEntry();
-	}
+        return white.getEntries().firstEntry();
+    }
 
-	public static <K extends Comparable<K>, T>
-	Map.Entry<K, Set<T>> getMax(White<K, T> white) {
-		if (isNull(white) || white.getEntries().isEmpty()) {
-			return null;
-		}
+    public static <K extends Comparable<K>, T>
+    Entry<K, Set<T>> getMax(White<K, T> white) {
+        if (isNull(white) || white.getEntries().isEmpty()) {
+            return null;
+        }
 
-		return Arrays.stream(white.getGreys())
-				.filter(Objects::nonNull)
-				.map(GreyGetterAcc::getMax)
-				.filter(Objects::nonNull)
-				.min(Map.Entry.comparingByKey())
-				.orElse(white.getEntries().lastEntry());
-	}
+        return Arrays.stream(white.getGreys())
+                .filter(Objects::nonNull)
+                .map(GreyGetterAcc::getMax)
+                .filter(Objects::nonNull)
+                .min(Entry.comparingByKey())
+                .orElse(white.getEntries().lastEntry());
+    }
 
-	public static <T, K extends Comparable<K>>
-	void getAllAsc(List<Set<T>> list, White<K, T> white) {
-		if (isNull(white)) {
-			return;
-		}
+    public static <T, K extends Comparable<K>>
+    void getAllAsc(List<Entry<K, Set<T>>> list, White<K, T> white) {
+        if (isNull(white)) {
+            return;
+        }
 
-		for (var entry : white.getEntries()) {
-			list.add(entry.getValue());
-		}
+        list.addAll(white.getEntries());
 
-		var heapTree = new MinHeapTree<K, T>();
-		for (var grey : white.getGreys()) {
-			if (grey != null) {
-				GreyGetterAcc.getAllAsc(heapTree, grey);
-			}
-		}
+        var results = new ArrayList<Iterator<Entry<K, Set<T>>>>(white.getCapacity());
 
-		list.addAll(heapTree.popAll());
-	}
+        for (var grey : white.getGreys()) {
+            var res = GreyGetterAcc.getAllAsc(grey);
+            results.add(res.iterator());
+        }
 
-	public static <T, K extends Comparable<K>>
-	void getAllAsc(MinHeapTree<K, T> heapTree, White<K, T> white) {
-		if (isNull(white)) {
-			return;
-		}
+        EntryHandler.mergeAsc(list, results);
+    }
 
-		for (var entry : white.getEntries()) {
-			heapTree.push(entry);
-		}
+    public static <T, K extends Comparable<K>>
+    void getAllDesc(List<Entry<K, Set<T>>> list, White<K, T> white) {
+        if (isNull(white)) {
+            return;
+        }
 
-		for (var grey : white.getGreys()) {
-			if (grey != null) {
-				GreyGetterAcc.getAllAsc(heapTree, grey);
-			}
-		}
-	}
+        var results = new ArrayList<Iterator<Entry<K, Set<T>>>>(white.getCapacity());
 
-	public static <T, K extends Comparable<K>>
-	void getAllDesc(List<Set<T>> list, White<K, T> white) {
-		if (isNull(white)) {
-			return;
-		}
+        for (var grey : white.getGreys()) {
+            var res = GreyGetterAcc.getAllDesc(grey);
+            results.add(res.iterator());
+        }
 
-		var heapTree = new MaxHeapTree<K, T>();
-		for (var grey : white.getGreys()) {
-			if (grey != null) {
-				GreyGetterAcc.getAllDesc(heapTree, grey);
-			}
-		}
+        EntryHandler.mergeDesc(list, results);
 
-		list.addAll(heapTree.popAll());
-
-		for (int i = white.getEntries().size() - 1; i >= 0; i--) {
-			list.add(white.getEntries().get(i).getValue());
-		}
-	}
-
-	public static <T, K extends Comparable<K>>
-	void getAllDesc(MaxHeapTree<K, T> heapTree, White<K, T> white) {
-		if (isNull(white)) {
-			return;
-		}
-
-		for (var entry : white.getEntries()) {
-			heapTree.push(entry);
-		}
-
-		for (var grey : white.getGreys()) {
-			if (grey != null) {
-				GreyGetterAcc.getAllDesc(heapTree, grey);
-			}
-		}
-	}
+        for (int i = white.getEntries().size() - 1; i >= 0; i--) {
+            list.add(white.getEntries().get(i));
+        }
+    }
 }

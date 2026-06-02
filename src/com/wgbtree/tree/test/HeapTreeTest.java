@@ -8,6 +8,7 @@ import com.wgbtree.tree.heap_opt.MaxHeap;
 import com.wgbtree.tree.heap_opt.MinHeap;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 public class HeapTreeTest extends Test {
 
@@ -75,7 +76,7 @@ public class HeapTreeTest extends Test {
             heap.push(Map.entry(i, Set.of(i)));
         }
 
-        var result = heap.popAll().stream().map(Set::iterator).map(Iterator::next).toList();
+        var result = heap.popAll().stream().map(Entry::getValue).map(Set::iterator).map(Iterator::next).toList();
         var sortedResult = result.stream().sorted().toList();
 
         for (int i = 0; i < sortedResult.size(); i++) {
@@ -105,7 +106,7 @@ public class HeapTreeTest extends Test {
             heap.push(Map.entry(i, Set.of(i)));
         }
 
-        var result = heap.popAll().stream().map(Set::iterator).map(Iterator::next).toList();
+        var result = heap.popAll().stream().map(Entry::getValue).map(Set::iterator).map(Iterator::next).toList();
         var sortedResult = result.stream().sorted(Comparator.reverseOrder()).toList();
 
         for (int i = 0; i < sortedResult.size(); i++) {

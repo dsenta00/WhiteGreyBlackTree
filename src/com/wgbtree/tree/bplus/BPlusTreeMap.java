@@ -230,14 +230,14 @@ public class BPlusTreeMap<K extends Comparable<K>, T> implements AsTree<K, T> {
 	}
 
 	@Override
-	public List<Set<T>> getAllAsc() {
+	public List<Entry<K, Set<T>>> getAllAsc() {
 		return root == null ? Collections.emptyList() : getAllAsc(root);
 	}
 
-	private List<Set<T>> getAllAsc(BPlusTreeNode node) {
-		List<Set<T>> res = new ArrayList<>();
-		if (node.getClass().equals(BPlusTreeLeafNode.class)) {
-			res.addAll(((BPlusTreeLeafNode) node).data);
+	private List<Entry<K, Set<T>>> getAllAsc(BPlusTreeNode node) {
+		List<Entry<K, Set<T>>> res = new ArrayList<>();
+		if (node instanceof BPlusTreeLeafNode leafNode) {
+			leafNode.data.forEach(d -> res.add(Map.entry(node.entries.get(0), d)));
 		} else {
 			for (var child : ((BPlusTreeNonLeafNode) node).children) {
 				res.addAll(getAllAsc(child));
@@ -247,14 +247,14 @@ public class BPlusTreeMap<K extends Comparable<K>, T> implements AsTree<K, T> {
 	}
 
 	@Override
-	public List<Set<T>> getAllDesc() {
+	public List<Entry<K, Set<T>>> getAllDesc() {
 		return root == null ? Collections.emptyList() : getAllDesc(root);
 	}
 
-	private List<Set<T>> getAllDesc(BPlusTreeNode node) {
-		List<Set<T>> res = new ArrayList<>();
+	private List<Entry<K, Set<T>>> getAllDesc(BPlusTreeNode node) {
+		List<Entry<K, Set<T>>> res = new ArrayList<>();
 		if (node.getClass().equals(BPlusTreeLeafNode.class)) {
-			res.addAll(((BPlusTreeLeafNode) node).data);
+			((BPlusTreeLeafNode) node).data.forEach(d -> res.add(Map.entry(node.entries.get(0), d)));
 		} else {
 			for (int i = ((BPlusTreeNonLeafNode) node).children.size() - 1; i >= 0; --i) {
 				res.addAll(getAllDesc(((BPlusTreeNonLeafNode) node).children.get(i)));
@@ -359,12 +359,12 @@ public class BPlusTreeMap<K extends Comparable<K>, T> implements AsTree<K, T> {
 	}
 
 	@Override
-	public List<Set<T>> getBetweenAsc(K from, K to) {
+	public List<Entry<K, Set<T>>> getBetweenAsc(K from, K to) {
 		return root == null ? Collections.emptyList() : getBetweenAsc(root, from, to);
 	}
 
-	private List<Set<T>> getBetweenAsc(BPlusTreeNode node, K from, K to) {
-		List<Set<T>> res = new ArrayList<>();
+	private List<Entry<K, Set<T>>> getBetweenAsc(BPlusTreeNode node, K from, K to) {
+		List<Entry<K, Set<T>>> res = new ArrayList<>();
 
 		if (node instanceof BPlusTreeLeafNode) {
 			// Leaf node processing
@@ -372,7 +372,7 @@ public class BPlusTreeMap<K extends Comparable<K>, T> implements AsTree<K, T> {
 			for (int i = 0; i < leaf.entries.size(); ++i) {
 				K key = leaf.entries.get(i);
 				if (key.compareTo(from) >= 0 && key.compareTo(to) < 0) {
-					res.add(leaf.data.get(i));
+					res.add(Map.entry(key, leaf.data.get(i)));
 				}
 				if (key.compareTo(to) >= 0) {
 					break; // No need to check further entries

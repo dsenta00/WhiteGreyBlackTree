@@ -75,12 +75,12 @@ public class StraightWGBTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K
 	}
 
 	@Override
-	public List<Set<T>> getAllAsc() {
+	public List<Entry<K, Set<T>>> getAllAsc() {
 		return GreyGetterStraight.getAllAsc(grey);
 	}
 
 	@Override
-	public List<Set<T>> getAllDesc() {
+	public List<Entry<K, Set<T>>> getAllDesc() {
 		return GreyGetterStraight.getAllDesc(grey);
 	}
 
@@ -244,7 +244,7 @@ public class StraightWGBTreeMap<K extends Comparable<K>, T> extends WGBTreeMap<K
 	}
 
 	@Override
-	public List<Set<T>> getBetweenAsc(K from, K to) {
+	public List<Entry<K, Set<T>>> getBetweenAsc(K from, K to) {
 		return GreyGetterStraight.getBetweenAsc(grey, from, to);
 	}
 }

@@ -105,39 +105,33 @@ public final class GreyGetterAcc {
 		return Set.of();
 	}
 
-	public static <T, K extends Comparable<K>> List<Set<T>> getAllAsc(Grey<K, T> grey) {
-		List<Set<T>> list = new LinkedList<>();
+	public static <T, K extends Comparable<K>>
+	List<Entry<K, Set<T>>> getAllAsc(Grey<K, T> grey) {
+		List<Entry<K, Set<T>>> list = new LinkedList<>();
 		getAllAsc(list, grey);
 		return list;
 	}
 
-	public static <T, K extends Comparable<K>> void getAllAsc(List<Set<T>> list, Grey<K, T> grey) {
+	public static <T, K extends Comparable<K>>
+	void getAllAsc(List<Entry<K, Set<T>>> list, Grey<K, T> grey) {
 		if (isNull(grey)) {
 			return;
 		}
 
 		WhiteGetterAcc.getAllAsc(list, (White<K, T>) grey.getLeft());
-		grey.getEntries().forEach(entry -> list.add(entry.getValue()));
+        list.addAll(grey.getEntries());
 		BlackGetterAcc.getAllAsc(list, (Black<K, T>) grey.getRight());
 	}
 
-	public static <T, K extends Comparable<K>> void getAllAsc(MinHeapTree<K, T> heapTree, Grey<K, T> grey) {
-		if (isNull(grey)) {
-			return;
-		}
-
-		WhiteGetterAcc.getAllAsc(heapTree, (White<K, T>) grey.getLeft());
-		grey.getEntries().forEach(heapTree::push);
-		BlackGetterAcc.getAllAsc(heapTree, (Black<K, T>) grey.getRight());
-	}
-
-	public static <T, K extends Comparable<K>> List<Set<T>> getAllDesc(Grey<K, T> grey) {
-		List<Set<T>> list = new LinkedList<>();
+	public static <T, K extends Comparable<K>>
+	List<Entry<K, Set<T>>> getAllDesc(Grey<K, T> grey) {
+		List<Entry<K, Set<T>>> list = new LinkedList<>();
 		getAllDesc(list, grey);
 		return list;
 	}
 
-	public static <T, K extends Comparable<K>> void getAllDesc(List<Set<T>> list, Grey<K, T> grey) {
+	public static <T, K extends Comparable<K>>
+	void getAllDesc(List<Entry<K, Set<T>>> list, Grey<K, T> grey) {
 		if (isNull(grey)) {
 			return;
 		}
@@ -145,20 +139,10 @@ public final class GreyGetterAcc {
 		BlackGetterAcc.getAllDesc(list, (Black<K, T>) grey.getRight());
 
 		for (int i = grey.getEntries().size() - 1; i >= 0; i--) {
-			list.add(grey.getEntries().get(i).getValue());
+			list.add(grey.getEntries().get(i));
 		}
 
 		WhiteGetterAcc.getAllDesc(list, (White<K, T>) grey.getLeft());
-	}
-
-	public static <K extends Comparable<K>, T> void getAllDesc(MaxHeapTree<K, T> heapTree, Grey<K, T> grey) {
-		if (isNull(grey)) {
-			return;
-		}
-
-		BlackGetterAcc.getAllDesc(heapTree, (Black<K, T>) grey.getRight());
-		grey.getEntries().forEach(heapTree::push);
-		WhiteGetterAcc.getAllDesc(heapTree, (White<K, T>) grey.getLeft());
 	}
 
 	public static <T, K extends Comparable<K>> List<Set<T>> getInAsc(Grey<K, T> grey, List<K> keys) {

@@ -20,9 +20,10 @@ public class Main {
 
     private static final Map<String, List<WriteRequest>> batchWriteItemRequests = new HashMap<>();
     private static final List<UpdateItemRequest> updateItemRequests = new ArrayList<>();
-    private static final int MAX_REPEAT = 5;
-    private static final int MIN_TOTAL_COUNT = 64_000;
-    private static final int MAX_TOTAL_COUNT = 1_000_000;
+    private static final int MAX_REPEAT = 1;
+    private static final int MIN_TOTAL_COUNT = 6_000_000;
+    private static final int MAX_TOTAL_COUNT = 6_000_000;
+    private static final int MIN_COUNT_TO_WRITE = 0;
     private static final int DYNAMO_DB_MAX_BATCH_SIZE = 25;
     private static final int DYNAMO_DB_FLUSH_SIZE = 1000;
     private static final int MIN_CALCULATING_GROUP_SIZE = 25;
@@ -53,7 +54,27 @@ public class Main {
         }
     }
 
+    public static void flushForce() {
+        updateItemRequests.forEach(dynamoDbClient::updateItem);
+        updateItemRequests.clear();
+
+        batchWriteItemRequests.forEach((tableName, list) -> {
+            for (int i = 0; i < list.size(); i += DYNAMO_DB_MAX_BATCH_SIZE) {
+                var request = new BatchWriteItemRequest();
+                request.withRequestItems(Map.of(tableName, list.subList(i, Math.min(i + DYNAMO_DB_MAX_BATCH_SIZE, list.size()))));
+                dynamoDbClient.batchWriteItem(request);
+            }
+        });
+
+        batchWriteItemRequests.clear();
+        batchSize = 0;
+    }
+
     public static void writeToTable(String operation, int count, String treeName, long metric) {
+        if (count < MIN_COUNT_TO_WRITE) {
+            return;
+        }
+
         var getItemRequest = new GetItemRequest()
                 .withTableName(operation)
                 .withKey(Map.of("tree_name", new AttributeValue(treeName), "count", new AttributeValue().withN(String.valueOf(count))));
@@ -106,7 +127,15 @@ public class Main {
     }
 
     public static void deleteTables() {
-        deleteTable("searchRange");
+    }
+
+    public static void deleteAllByTreeName(String treeName) {
+        deleteByTreeName("insert", treeName);
+        deleteByTreeName("search", treeName);
+        deleteByTreeName("searchMin", treeName);
+        deleteByTreeName("searchMax", treeName);
+        deleteByTreeName("depth", treeName);
+        deleteByTreeName("searchRange", treeName);
     }
 
     public static void createTableIfDoesNotExist(String operation) {
@@ -121,6 +150,44 @@ public class Main {
             return !Objects.equals(response.getTable().getTableStatus(), "ACTIVE");
         } catch (ResourceNotFoundException e) {
             return true;
+        }
+    }
+
+    private static void deleteByTreeName(String tableName, String treeName) {
+        System.out.print(" > Deleting tree " + treeName + " from table " + tableName);
+
+        try {
+            var request = new QueryRequest()
+                    .withTableName(tableName)
+                    .withKeyConditionExpression("tree_name = :tree_name")
+                    .withExpressionAttributeValues(Map.of(":tree_name", new AttributeValue(treeName)));
+
+            var items = dynamoDbClient.query(request).getItems();
+
+            if (items.isEmpty()) {
+                System.out.println(" - No items found for " + treeName);
+                return;
+            }
+
+            for (var item : items) {
+                String treeNameValue = item.get("tree_name").getS();
+                String countValue = item.get("count").getN();
+
+                Map<String, AttributeValue> key = new HashMap<>();
+                key.put("tree_name", new AttributeValue().withS(treeNameValue));
+                key.put("count", new AttributeValue().withN(countValue));
+
+                var deleteRequest = new DeleteItemRequest()
+                        .withTableName(tableName)
+                        .withKey(key);
+
+                dynamoDbClient.deleteItem(deleteRequest);
+            }
+
+            System.out.println(" - Deleted " + items.size() + " items");
+        } catch (Exception e) {
+            System.err.println("Delete request failed for " + tableName);
+            System.err.println(e.getMessage());
         }
     }
 
@@ -176,30 +243,39 @@ public class Main {
 
     public static void main(String[] args) {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            flushBuffer(); // Ensure any remaining data is written to the file
+            flushForce(); // Ensure any remaining data is written to the file
             System.out.println("Shutdown hook triggered.");
         }));
 
         List<AsTree<String, Boolean>> trees = List.<AsTree<String, Boolean>>of(
+
                 new TreeMapAsTree<>(),
+
+                new BPlusTreeMap<>(600),
+                new StraightWGBTreeMap<>(600, false),
+                new RangeWGBTreeMap<>(600, false),
+
 
                 new BPlusTreeMap<>(100),
                 new BPlusTreeMap<>(150),
                 new BPlusTreeMap<>(200),
                 new BPlusTreeMap<>(300),
-                new BPlusTreeMap<>(600),
 
                 new StraightWGBTreeMap<>(100, false),
                 new StraightWGBTreeMap<>(150, false),
                 new StraightWGBTreeMap<>(200, false),
                 new StraightWGBTreeMap<>(300, false),
-                new StraightWGBTreeMap<>(600, false),
 
-                new AccWGBTreeMap<>(100, 2, false),
-                new AccWGBTreeMap<>(150, 2, false),
-                new AccWGBTreeMap<>(200, 2, false),
-                new AccWGBTreeMap<>(300, 2, false),
-                new AccWGBTreeMap<>(600, 2, false),
+                new RangeWGBTreeMap<>(100, false),
+                new RangeWGBTreeMap<>(150, false),
+                new RangeWGBTreeMap<>(200, false),
+                new RangeWGBTreeMap<>(300, false),
+
+                new RangeWGBTreeMap<>(600, true),
+                new RangeWGBTreeMap<>(300, true),
+                new RangeWGBTreeMap<>(200, true),
+                new RangeWGBTreeMap<>(150, true),
+                new RangeWGBTreeMap<>(100, true),
 
                 new AccWGBTreeMap<>(100, 199, false),
                 new AccWGBTreeMap<>(150, 199, false),
@@ -219,17 +295,60 @@ public class Main {
                 new AccWGBTreeMap<>(300, 8191, false),
                 new AccWGBTreeMap<>(600, 8191, false),
 
+                new DecWGBTreeMap<>(100, 8191, false),
+                new DecWGBTreeMap<>(150, 8191, false),
+                new DecWGBTreeMap<>(200, 8191, false),
+                new DecWGBTreeMap<>(300, 8191, false),
+                new DecWGBTreeMap<>(600, 8191, false),
+
+                new FwMersenneAccWgbTreeMap<>(100, 7, false),
+                new FwMersenneAccWgbTreeMap<>(150, 7, false),
+                new FwMersenneAccWgbTreeMap<>(200, 7, false),
+                new FwMersenneAccWgbTreeMap<>(300, 7, false),
+                new FwMersenneAccWgbTreeMap<>(600, 7, false),
+
+                new FwMersenneDecWgbTreeMap<>(100, 7, false),
+                new FwMersenneDecWgbTreeMap<>(150, 7, false),
+                new FwMersenneDecWgbTreeMap<>(200, 7, false),
+                new FwMersenneDecWgbTreeMap<>(300, 7, false),
+                new FwMersenneDecWgbTreeMap<>(600, 7, false),
+                new FwMersenneDecWgbTreeMap<>(600, 13, false),
+                new MersenneDecWgbTreeMap<>(600, 13, false),
+                new FwMersenneAccWgbTreeMap<>(600, 13, false),
+                new MersenneAccWgbTreeMap<>(600, 13, false),
+                new WGBPowerTreeMap<>(600, 13, false),
+
+                new FwMersenneAccWgbTreeMap<>(100, 13, false),
+                new FwMersenneAccWgbTreeMap<>(150, 13, false),
+                new FwMersenneAccWgbTreeMap<>(200, 13, false),
+                new FwMersenneAccWgbTreeMap<>(300, 13, false),
+
+                new FwMersenneDecWgbTreeMap<>(100, 13, false),
+                new FwMersenneDecWgbTreeMap<>(150, 13, false),
+                new FwMersenneDecWgbTreeMap<>(200, 13, false),
+                new FwMersenneDecWgbTreeMap<>(300, 13, false),
+
+                new MersenneAccWgbTreeMap<>(100, 7, false),
+                new MersenneAccWgbTreeMap<>(150, 7, false),
+                new MersenneAccWgbTreeMap<>(200, 7, false),
+                new MersenneAccWgbTreeMap<>(300, 7, false),
+                new MersenneAccWgbTreeMap<>(600, 7, false),
+
+                new MersenneDecWgbTreeMap<>(100, 7, false),
+                new MersenneDecWgbTreeMap<>(150, 7, false),
+                new MersenneDecWgbTreeMap<>(200, 7, false),
+                new MersenneDecWgbTreeMap<>(300, 7, false),
+                new MersenneDecWgbTreeMap<>(600, 7, false),
+
                 new MersenneAccWgbTreeMap<>(100, 13, false),
                 new MersenneAccWgbTreeMap<>(150, 13, false),
                 new MersenneAccWgbTreeMap<>(200, 13, false),
                 new MersenneAccWgbTreeMap<>(300, 13, false),
-                new MersenneAccWgbTreeMap<>(600, 13, false),
 
                 new MersenneDecWgbTreeMap<>(100, 13, false),
                 new MersenneDecWgbTreeMap<>(150, 13, false),
                 new MersenneDecWgbTreeMap<>(200, 13, false),
                 new MersenneDecWgbTreeMap<>(300, 13, false),
-                new MersenneDecWgbTreeMap<>(600, 13, false),
 
                 new WGBPowerTreeMap<>(100, 9, false),
                 new WGBPowerTreeMap<>(150, 9, false),
@@ -258,8 +377,7 @@ public class Main {
                 new WGBPowerTreeMap<>(100, 13, false),
                 new WGBPowerTreeMap<>(150, 13, false),
                 new WGBPowerTreeMap<>(200, 13, false),
-                new WGBPowerTreeMap<>(300, 13, false),
-                new WGBPowerTreeMap<>(600, 13, false)
+                new WGBPowerTreeMap<>(300, 13, false)
         );
 
         deleteTables();
@@ -288,7 +406,13 @@ public class Main {
 
                 for (int count = 0; count <= finalTotalCount; count += calculatingGroupSize) {
 
-                    if (count >= 500_000) {
+                    if (count >= 4_000_000) {
+                        calculatingGroupSize = 10_000;
+                    } else if (count >= 2_000_000) {
+                        calculatingGroupSize = 5000;
+                    } else if (count >= 1_000_000) {
+                        calculatingGroupSize = 3000;
+                    } else if (count >= 500_000) {
                         calculatingGroupSize = 2000;
                     } else if (count >= 250_000) {
                         calculatingGroupSize = 1000;
@@ -312,6 +436,10 @@ public class Main {
                         long insertTime = randomUuids.stream()
                                 .map(uuid -> measureTime(() -> tree.put(uuid, true)))
                                 .reduce(0L, Long::sum) / calculatingGroupSize;
+
+                        if (count < MIN_COUNT_TO_WRITE) {
+                            continue;
+                        }
 
                         writeToTable("insert", count + calculatingGroupSize, tree.getName(), insertTime);
 
@@ -345,6 +473,8 @@ public class Main {
                         break;
                     }
                 }
+
+                flushForce();
 
                 tree.clear();
                 System.gc();

@@ -85,7 +85,7 @@ public final class GreyInserterDec {
 						  TreeConfig config) {
 		var left = grey.getLeft();
 
-		if (config.shouldHaveGreyChildren()) {
+		if (config.reachedRankLimit()) {
 			left = insert((Grey<K, T>) left, key, value, keyHash, oldValue, config);
 		} else {
 			left = WhiteInserterDec.insert((White<K, T>) left, key, value, keyHash, oldValue, config);
@@ -108,7 +108,7 @@ public final class GreyInserterDec {
 						   TreeConfig config) {
 		var right = grey.getRight();
 
-		if (config.shouldHaveGreyChildren()) {
+		if (config.reachedRankLimit()) {
 			right = insert((Grey<K, T>) right, key, value, keyHash, oldValue, config);
 		} else {
 			right = BlackInserterDec.insert((Black<K, T>) right, key, value, keyHash, oldValue, config);

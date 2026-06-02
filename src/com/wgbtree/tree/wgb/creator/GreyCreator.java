@@ -1,5 +1,6 @@
 package com.wgbtree.tree.wgb.creator;
 
+import com.wgbtree.tree.wgb.model.node.grey.FwGrey;
 import com.wgbtree.tree.wgb.model.node.grey.Grey;
 import com.wgbtree.tree.wgb.model.info.TreeConfig;
 import lombok.NoArgsConstructor;
@@ -15,6 +16,13 @@ public final class GreyCreator {
 	public static <K extends Comparable<K>, T>
 	Grey<K, T> create(K key, Set<T> value, TreeConfig config) {
 		var grey = new Grey<K, T>(config.getOrder(), config.getDuplicatesAllowed());
+		grey.getEntries().add(new SimpleEntry<>(key, value));
+		return grey;
+	}
+
+	public static <K extends Comparable<K>, T>
+	Grey<K, T> createFw(K key, Set<T> value, TreeConfig config) {
+		var grey = new FwGrey<K, T>(config.getOrder(), config.getDuplicatesAllowed());
 		grey.getEntries().add(new SimpleEntry<>(key, value));
 		return grey;
 	}

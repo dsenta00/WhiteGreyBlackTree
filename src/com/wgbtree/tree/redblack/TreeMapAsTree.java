@@ -3,10 +3,7 @@ package com.wgbtree.tree.redblack;
 import com.wgbtree.tree.AsTree;
 
 import java.io.Serializable;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 public class TreeMapAsTree<K extends Comparable<K>, T> extends TreeMap<K, T> implements AsTree<K, T>, Serializable {
 
@@ -39,13 +36,13 @@ public class TreeMapAsTree<K extends Comparable<K>, T> extends TreeMap<K, T> imp
 	}
 
 	@Override
-	public List<Set<T>> getAllAsc() {
-		return super.keySet().stream().map(k -> Set.of(super.get(k))).toList();
+	public List<Map.Entry<K, Set<T>>> getAllAsc() {
+		return super.keySet().stream().map(k -> Map.entry(k, Set.of(super.get(k)))).toList();
 	}
 
 	@Override
-	public List<Set<T>> getAllDesc() {
-		return super.descendingKeySet().stream().map(k -> Set.of(super.get(k))).toList();
+	public List<Map.Entry<K, Set<T>>> getAllDesc() {
+		return super.descendingKeySet().stream().map(k -> Map.entry(k, Set.of(super.get(k)))).toList();
 	}
 
 	@Override
@@ -69,8 +66,8 @@ public class TreeMapAsTree<K extends Comparable<K>, T> extends TreeMap<K, T> imp
 	}
 
 	@Override
-	public List<Set<T>> getBetweenAsc(K from, K to) {
-		return super.subMap(from, to).keySet().stream().map(k -> Set.of(super.get(k))).toList();
+	public List<Map.Entry<K, Set<T>>> getBetweenAsc(K from, K to) {
+		return super.subMap(from, to).entrySet().stream().map(e -> Map.entry(e.getKey(), Set.of(e.getValue()))).toList();
 	}
 
 	@Override

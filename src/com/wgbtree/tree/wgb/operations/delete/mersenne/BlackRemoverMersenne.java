@@ -5,6 +5,7 @@ import com.wgbtree.tree.wgb.model.node.black.Black;
 import com.wgbtree.tree.wgb.model.node.grey.Grey;
 import com.wgbtree.tree.wgb.model.result.RemoveResult;
 import com.wgbtree.tree.wgb.operations.get.dec.GreyGetterDec;
+import com.wgbtree.tree.wgb.operations.get.mersenne.GreyGetterMersenne;
 import com.wgbtree.tree.wgb.prime.Primes;
 import lombok.NoArgsConstructor;
 
@@ -88,7 +89,7 @@ public final class BlackRemoverMersenne {
 			return RemoveResult.empty();
 		}
 
-		var minResult = GreyGetterDec.getMin(black.getGreys());
+		var minResult = GreyGetterMersenne.getMin(black.getGreys());
 		Map.Entry<K, Set<T>> removedEntry;
 		if (minResult.isEmpty()) {
 			// No grey nodes, remove minimum from the black node

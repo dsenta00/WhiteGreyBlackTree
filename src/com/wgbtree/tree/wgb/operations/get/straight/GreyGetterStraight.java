@@ -53,7 +53,6 @@ public final class GreyGetterStraight {
 	public static <K extends Comparable<K>, T>
 	GreySearchResult<K, T> getMax(Grey<K, T>[] greys) {
 		if (isNull(greys) || greys.length == 0) {
-			// arrays is null or empty, return empty result
 			return GreySearchResult.empty();
 		}
 
@@ -83,7 +82,6 @@ public final class GreyGetterStraight {
 	public static <K extends Comparable<K>, T>
 	Set<T> get(Grey<K, T> grey, K key, int keyHash) {
 		if (isNull(grey) || grey.getEntries().isEmpty()) {
-			// Node is empty, return empty set
 			return Set.of();
 		}
 
@@ -98,39 +96,33 @@ public final class GreyGetterStraight {
 		return Set.of();
 	}
 
-	public static <T, K extends Comparable<K>> List<Set<T>> getAllAsc(Grey<K, T> grey) {
-		List<Set<T>> list = new LinkedList<>();
+	public static <T, K extends Comparable<K>>
+	List<Entry<K, Set<T>>> getAllAsc(Grey<K, T> grey) {
+		List<Entry<K, Set<T>>> list = new LinkedList<>();
 		getAllAsc(list, grey);
 		return list;
 	}
 
-	public static <T, K extends Comparable<K>> void getAllAsc(List<Set<T>> list, Grey<K, T> grey) {
+	public static <T, K extends Comparable<K>>
+	void getAllAsc(List<Entry<K, Set<T>>> list, Grey<K, T> grey) {
 		if (isNull(grey)) {
 			return;
 		}
 
 		getAllAsc(list, (Grey<K, T>) grey.getLeft());
-		grey.getEntries().forEach(entry -> list.add(entry.getValue()));
+        list.addAll(grey.getEntries());
 		getAllAsc(list, (Grey<K, T>) grey.getRight());
 	}
 
-	public static <T, K extends Comparable<K>> void getAllAsc(MinHeapTree<K, T> heapTree, Grey<K, T> grey) {
-		if (isNull(grey)) {
-			return;
-		}
-
-		getAllAsc(heapTree, (Grey<K, T>) grey.getLeft());
-		grey.getEntries().forEach(heapTree::push);
-		getAllAsc(heapTree, (Grey<K, T>) grey.getRight());
-	}
-
-	public static <T, K extends Comparable<K>> List<Set<T>> getAllDesc(Grey<K, T> grey) {
-		List<Set<T>> list = new LinkedList<>();
+	public static <T, K extends Comparable<K>>
+	List<Entry<K, Set<T>>> getAllDesc(Grey<K, T> grey) {
+		List<Entry<K, Set<T>>> list = new LinkedList<>();
 		getAllDesc(list, grey);
 		return list;
 	}
 
-	public static <T, K extends Comparable<K>> void getAllDesc(List<Set<T>> list, Grey<K, T> grey) {
+	public static <T, K extends Comparable<K>>
+	void getAllDesc(List<Entry<K, Set<T>>> list, Grey<K, T> grey) {
 		if (isNull(grey)) {
 			return;
 		}
@@ -138,20 +130,10 @@ public final class GreyGetterStraight {
 		getAllDesc(list, (Grey<K, T>) grey.getRight());
 
 		for (int i = grey.getEntries().size() - 1; i >= 0; i--) {
-			list.add(grey.getEntries().get(i).getValue());
+			list.add(grey.getEntries().get(i));
 		}
 
 		getAllDesc(list, (Grey<K, T>) grey.getLeft());
-	}
-
-	public static <K extends Comparable<K>, T> void getAllDesc(MaxHeapTree<K, T> heapTree, Grey<K, T> grey) {
-		if (isNull(grey)) {
-			return;
-		}
-
-		getAllDesc(heapTree, (Grey<K, T>) grey.getRight());
-		grey.getEntries().forEach(heapTree::push);
-		getAllDesc(heapTree, (Grey<K, T>) grey.getLeft());
 	}
 
 	public static <T, K extends Comparable<K>> List<Set<T>> getInAsc(Grey<K, T> grey, List<K> keys) {
@@ -159,7 +141,7 @@ public final class GreyGetterStraight {
 	}
 
 	public static <T, K extends Comparable<K>>
-	List<Set<T>> getBetweenAsc(Grey<K, T> grey, K from, K to) {
+	List<Entry<K, Set<T>>> getBetweenAsc(Grey<K, T> grey, K from, K to) {
 		if (isNull(grey)) {
 			return List.of();
 		}
@@ -168,13 +150,13 @@ public final class GreyGetterStraight {
 			return List.of();
 		}
 
-		List<Set<T>> list = new LinkedList<>();
+		List<Entry<K, Set<T>>> list = new LinkedList<>();
 		getBetweenAsc(list, grey, from, to);
 		return list;
 	}
 
 	private static <T, K extends Comparable<K>>
-	void getBetweenAsc(List<Set<T>> list, Grey<K, T> grey, K from, K to) {
+	void getBetweenAsc(List<Entry<K, Set<T>>> list, Grey<K, T> grey, K from, K to) {
 		if (isNull(grey)) {
 			return;
 		}
@@ -193,7 +175,7 @@ public final class GreyGetterStraight {
 			if (entries.get(i).getKey().compareTo(to) >= 0) {
 				return;
 			}
-			list.add(entries.get(i).getValue());
+			list.add(entries.get(i));
 		}
 
 		K lastKey = entries.lastEntry().getKey();

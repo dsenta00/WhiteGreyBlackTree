@@ -113,13 +113,15 @@ public final class GreyGetterMersenne {
 		return Set.of();
 	}
 
-	public static <T, K extends Comparable<K>> List<Set<T>> getAllAsc(Grey<K, T> grey) {
-		List<Set<T>> list = new LinkedList<>();
+	public static <T, K extends Comparable<K>>
+	List<Entry<K, Set<T>>> getAllAsc(Grey<K, T> grey) {
+		List<Entry<K, Set<T>>> list = new LinkedList<>();
 		getAllAsc(list, grey);
 		return list;
 	}
 
-	public static <T, K extends Comparable<K>> void getAllAsc(List<Set<T>> list, Grey<K, T> grey) {
+	public static <T, K extends Comparable<K>>
+	void getAllAsc(List<Entry<K, Set<T>>> list, Grey<K, T> grey) {
 		if (isNull(grey)) {
 			return;
 		}
@@ -127,61 +129,35 @@ public final class GreyGetterMersenne {
 		var left = grey.getLeft();
 
 		if (left != null) {
-			if (left instanceof White<K, T> leftAsWhite) {
-				WhiteGetterMersenne.getAllAsc(list, leftAsWhite);
+			if (left instanceof White<K, T> white) {
+				WhiteGetterMersenne.getAllAsc(list, white);
 			} else if (left instanceof Grey<K, T> leftAsGrey) {
 				getAllAsc(list, leftAsGrey);
 			}
 		}
 
-		grey.getEntries().forEach(entry -> list.add(entry.getValue()));
+        list.addAll(grey.getEntries());
 
 		var right = grey.getRight();
 
 		if (right != null) {
-			if (right instanceof Black<K, T> rightAsBlack) {
-				BlackGetterMersenne.getAllAsc(list, rightAsBlack);
+			if (right instanceof Black<K, T> black) {
+				BlackGetterMersenne.getAllAsc(list, black);
 			} else if (right instanceof Grey<K, T> rightAsGrey) {
 				getAllAsc(list, rightAsGrey);
 			}
 		}
 	}
 
-	public static <T, K extends Comparable<K>> void getAllAsc(MinHeapTree<K, T> heapTree, Grey<K, T> grey) {
-		if (isNull(grey)) {
-			return;
-		}
-
-		var left = grey.getLeft();
-
-		if (left != null) {
-			if (left instanceof White<K, T> leftAsWhite) {
-				WhiteGetterMersenne.getAllAsc(heapTree, leftAsWhite);
-			} else if (left instanceof Grey<K, T> leftAsGrey) {
-				getAllAsc(heapTree, leftAsGrey);
-			}
-		}
-
-		grey.getEntries().forEach(heapTree::push);
-
-		var right = grey.getRight();
-
-		if (right != null) {
-			if (right instanceof Black<K, T> rightAsBlack) {
-				BlackGetterMersenne.getAllAsc(heapTree, rightAsBlack);
-			} else if (right instanceof Grey<K, T> rightAsGrey) {
-				getAllAsc(heapTree, rightAsGrey);
-			}
-		}
-	}
-
-	public static <T, K extends Comparable<K>> List<Set<T>> getAllDesc(Grey<K, T> grey) {
-		List<Set<T>> list = new LinkedList<>();
+	public static <T, K extends Comparable<K>>
+	List<Entry<K, Set<T>>> getAllDesc(Grey<K, T> grey) {
+		List<Entry<K, Set<T>>> list = new LinkedList<>();
 		getAllDesc(list, grey);
 		return list;
 	}
 
-	public static <T, K extends Comparable<K>> void getAllDesc(List<Set<T>> list, Grey<K, T> grey) {
+	public static <T, K extends Comparable<K>>
+	void getAllDesc(List<Entry<K, Set<T>>> list, Grey<K, T> grey) {
 		if (isNull(grey)) {
 			return;
 		}
@@ -197,44 +173,16 @@ public final class GreyGetterMersenne {
 		}
 
 		for (int i = grey.getEntries().size() - 1; i >= 0; i--) {
-			list.add(grey.getEntries().get(i).getValue());
+			list.add(grey.getEntries().get(i));
 		}
 
 		var left = grey.getLeft();
 
 		if (left != null) {
-			if (left instanceof White<K, T> leftAsWhite) {
-				WhiteGetterMersenne.getAllDesc(list, leftAsWhite);
+			if (left instanceof White<K, T> white) {
+				WhiteGetterMersenne.getAllDesc(list, white);
 			} else if (left instanceof Grey<K, T> leftAsGrey) {
 				getAllDesc(list, leftAsGrey);
-			}
-		}
-	}
-
-	public static <K extends Comparable<K>, T> void getAllDesc(MaxHeapTree<K, T> heapTree, Grey<K, T> grey) {
-		if (isNull(grey)) {
-			return;
-		}
-
-		var right = grey.getRight();
-
-		if (right != null) {
-			if (right instanceof Black<K, T> rightAsBlack) {
-				BlackGetterMersenne.getAllDesc(heapTree, rightAsBlack);
-			} else if (right instanceof Grey<K, T> rightAsGrey) {
-				getAllDesc(heapTree, rightAsGrey);
-			}
-		}
-
-		grey.getEntries().forEach(heapTree::push);
-
-		var left = grey.getLeft();
-
-		if (left != null) {
-			if (left instanceof White<K, T> leftAsWhite) {
-				WhiteGetterMersenne.getAllDesc(heapTree, leftAsWhite);
-			} else if (left instanceof Grey<K, T> leftAsGrey) {
-				getAllDesc(heapTree, leftAsGrey);
 			}
 		}
 	}
@@ -244,7 +192,7 @@ public final class GreyGetterMersenne {
 	}
 
 	public static <T, K extends Comparable<K>>
-	List<Set<T>> getBetweenAsc(Grey<K, T> grey, K from, K to) {
+	List<Entry<K, Set<T>>> getBetweenAsc(Grey<K, T> grey, K from, K to) {
 		if (isNull(grey)) {
 			return List.of();
 		}
@@ -253,13 +201,13 @@ public final class GreyGetterMersenne {
 			return List.of();
 		}
 
-		List<Set<T>> list = new LinkedList<>();
+		List<Entry<K, Set<T>>> list = new LinkedList<>();
 		getBetweenAsc(list, grey, from, to);
 		return list;
 	}
 
 	private static <T, K extends Comparable<K>>
-	void getBetweenAsc(List<Set<T>> list, Grey<K, T> grey, K from, K to) {
+	void getBetweenAsc(List<Entry<K, Set<T>>> list, Grey<K, T> grey, K from, K to) {
 		if (isNull(grey)) {
 			return;
 		}
@@ -270,8 +218,8 @@ public final class GreyGetterMersenne {
 
 		if (firstKey.compareTo(from) > 0) {
 			if (nonNull(grey.getLeft())) {
-				if (grey.getLeft() instanceof White<K, T> leftAsWhite) {
-					WhiteGetterMersenne.getBetweenAsc(list, leftAsWhite, from, to);
+				if (grey.getLeft() instanceof White<K, T> white) {
+					WhiteGetterMersenne.getBetweenAsc(list, white, from, to);
 				} else if (grey.getLeft() instanceof Grey<K, T> leftAsGrey) {
 					getBetweenAsc(list, leftAsGrey, from, to);
 				}
@@ -284,58 +232,17 @@ public final class GreyGetterMersenne {
 			if (entries.get(i).getKey().compareTo(to) >= 0) {
 				return;
 			}
-			list.add(entries.get(i).getValue());
+			list.add(entries.get(i));
 		}
 
 		K lastKey = entries.lastEntry().getKey();
 
 		if (lastKey.compareTo(to) < 0) {
 			if (nonNull(grey.getRight())) {
-				if (grey.getRight() instanceof Black<K, T> rightAsBlack) {
-					BlackGetterMersenne.getBetweenAsc(list, rightAsBlack, from, to);
+				if (grey.getRight() instanceof Black<K, T> black) {
+					BlackGetterMersenne.getBetweenAsc(list, black, from, to);
 				} else if (grey.getRight() instanceof Grey<K, T> rightAsGrey) {
 					getBetweenAsc(list, rightAsGrey, from, to);
-				}
-			}
-		}
-	}
-
-	public static <K extends Comparable<K>, T>
-	void getBetweenAsc(MinHeapTree<K, T> minHeapTree, Grey<K, T> grey, K from, K to) {
-		if (isNull(grey)) {
-			return;
-		}
-
-		var entries = grey.getEntries();
-		K firstKey = grey.getEntries().firstEntry().getKey();
-		int index = 0;
-
-		if (firstKey.compareTo(from) > 0) {
-			if (nonNull(grey.getLeft())) {
-				if (grey.getLeft() instanceof White<K, T> leftAsWhite) {
-					WhiteGetterMersenne.getBetweenAsc(minHeapTree, leftAsWhite, from, to);
-				} else if (grey.getLeft() instanceof Grey<K, T> leftAsGrey) {
-					getBetweenAsc(minHeapTree, leftAsGrey, from, to);
-				}
-			}
-		} else {
-			index = entries.searchClosest(from);
-		}
-
-		for (int i = index; i < grey.getEntries().size(); i++) {
-			if (entries.get(i).getKey().compareTo(to) >= 0) {
-				return;
-			}
-			minHeapTree.push(entries.get(i));
-		}
-
-		K lastKey = entries.lastEntry().getKey();
-		if (lastKey.compareTo(to) < 0) {
-			if (nonNull(grey.getRight())) {
-				if (grey.getRight() instanceof Black<K, T> rightAsBlack) {
-					BlackGetterMersenne.getBetweenAsc(minHeapTree, rightAsBlack, from, to);
-				} else if (grey.getRight() instanceof Grey<K, T> rightAsGrey) {
-					getBetweenAsc(minHeapTree, rightAsGrey, from, to);
 				}
 			}
 		}
